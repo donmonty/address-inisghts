@@ -26,7 +26,7 @@ export default function Home() {
       <div className="flex items-center gap-4">
         <Button>Search an address</Button>
         <span className="eyebrow text-xs text-muted-foreground">
-          0.0 km away
+          Mono label specimen
         </span>
       </div>
     </main>
