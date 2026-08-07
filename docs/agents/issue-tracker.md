@@ -32,3 +32,28 @@ Create a GitHub issue.
 ## When a skill says "fetch the relevant ticket"
 
 Run `gh issue view <number> --comments`.
+
+## Wayfinding operations
+
+For the `wayfinder` skill. GitHub expresses the map's structure natively — use these, not body conventions.
+
+- **The map**: an issue labelled `wayfinder:map`. Find it with `gh issue list --label "wayfinder:map" --state open`.
+- **Tickets**: child issues of the map, each labelled `wayfinder:<type>` (`research`, `prototype`, `grilling`, `task`).
+- **Attach a ticket to the map** (sub-issue): look up the child's numeric `id` (not its number), then post it. Note `-F` for a typed integer — `-f` sends a string and 422s:
+  ```sh
+  id=$(gh api repos/{owner}/{repo}/issues/<child-number> --jq .id)
+  gh api -X POST repos/{owner}/{repo}/issues/<map-number>/sub_issues -F sub_issue_id=$id
+  ```
+- **Blocking edge** (`<blocked>` is blocked by `<blocker>`), same `id`-not-number rule:
+  ```sh
+  id=$(gh api repos/{owner}/{repo}/issues/<blocker>/ --jq .id)
+  gh api -X POST repos/{owner}/{repo}/issues/<blocked>/dependencies/blocked_by -F issue_id=$id
+  ```
+- **Claim a ticket**: `gh issue edit <number> --add-assignee @me`, before any work.
+- **The frontier** — open, unassigned children of the map with nothing open blocking them:
+  ```sh
+  gh api repos/{owner}/{repo}/issues/<map-number>/sub_issues \
+    --jq '.[] | select(.state=="open" and .assignee==null) | {number, title}'
+  ```
+  then drop any whose `dependencies/blocked_by` still lists an open issue.
+- **Resolve**: `gh issue close <number> --comment "<the answer>"`, then append a one-line gist + link to the map's Decisions-so-far.
