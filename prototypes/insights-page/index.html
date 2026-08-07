@@ -1,0 +1,555 @@
+<!doctype html>
+<!--
+  PROTOTYPE — throwaway. Answers issue #5 "Visual direction: shadcn theme, type, and insights-page layout".
+  Three structurally different insights-page layouts on one file, switchable via ?variant=A|B|C.
+  Independent switches: ?theme=dark|light  ?font=1|2|3  ?map=0|1  (+ token inspector)
+  Fake data throughout. No Mapbox GL — map is a pre-rendered static image per style/theme.
+  Open by double-clicking, or: python3 -m http.server -d prototypes/insights-page
+-->
+<html lang="en" data-theme="dark" data-font="1">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PROTOTYPE — Address Insights visual direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ─────────────────────────────────────────────────────────────
+   shadcn theme tokens, derived from RentEngine's marketing site.
+   These are the actual candidate values for app/globals.css.
+   ───────────────────────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  --background:            #16181C;
+  --foreground:            #F1F5F8;
+  --card:                  #1C1F24;
+  --card-foreground:       #F1F5F8;
+  --popover:               #1C1F24;
+  --popover-foreground:    #F1F5F8;
+  --primary:               #F4511E;
+  --primary-foreground:    #16181C;
+  --secondary:             #22262C;
+  --secondary-foreground:  #F1F5F8;
+  --muted:                 #22262C;
+  --muted-foreground:      #8B949E;
+  --accent:                #22262C;
+  --accent-foreground:     #F1F5F8;
+  --destructive:           #E5484D;
+  --border:                #2A2F36;
+  --input:                 #2A2F36;
+  --ring:                  #F4511E;
+  --radius:                0.625rem;
+  --map-shade: 1;
+}
+:root[data-theme="light"] {
+  --background:            #FFFFFF;
+  --foreground:            #16181C;
+  --card:                  #FFFFFF;
+  --card-foreground:       #16181C;
+  --popover:               #FFFFFF;
+  --popover-foreground:    #16181C;
+  --primary:               #F4511E;
+  --primary-foreground:    #FFFFFF;
+  --secondary:             #F1F5F8;
+  --secondary-foreground:  #16181C;
+  --muted:                 #F1F5F8;
+  --muted-foreground:      #5B6470;
+  --accent:                #F1F5F8;
+  --accent-foreground:     #16181C;
+  --destructive:           #DC2626;
+  --border:                #E2E8ED;
+  --input:                 #E2E8ED;
+  --ring:                  #F4511E;
+  --radius:                0.625rem;
+  --map-shade: 0;
+}
+
+/* Font pairings — candidate 1/2/3, all free + self-hostable via next/font */
+:root[data-font="1"] { --font-sans: "Geist", system-ui, sans-serif;       --font-mono: "Geist Mono", monospace;    --sans-tight: -0.02em; }
+:root[data-font="2"] { --font-sans: "Space Grotesk", system-ui, sans-serif; --font-mono: "Space Mono", monospace;  --sans-tight: -0.015em; }
+:root[data-font="3"] { --font-sans: "Inter Tight", system-ui, sans-serif; --font-mono: "JetBrains Mono", monospace; --sans-tight: -0.025em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  letter-spacing: var(--sans-tight);
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* shared primitives */
+.mono { font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.6875rem; }
+.eyebrow { color: var(--muted-foreground); }
+.rule { height: 1px; background: var(--border); border: 0; margin: 0; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+.pill {
+  display: inline-flex; align-items: center; gap: 0.4em;
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 0.3rem 0.7rem; font-family: var(--font-mono);
+  font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.pill-primary { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); font-weight: 600; }
+.btn-primary {
+  background: var(--primary); color: var(--primary-foreground); border: 0;
+  border-radius: calc(var(--radius) - 2px); padding: 0.7rem 1.1rem;
+  font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.06em;
+  text-transform: uppercase; font-weight: 600;
+}
+.btn-ghost {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px); padding: 0.55rem 0.9rem;
+  font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.num { font-variant-numeric: tabular-nums; letter-spacing: -0.045em; font-weight: 700; line-height: 0.85; }
+.meter { height: 6px; background: var(--muted); border-radius: 999px; overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--foreground); border-radius: 999px; }
+.meter.is-primary > i { background: var(--primary); }
+.tick { color: var(--primary); }
+.miss { color: var(--muted-foreground); opacity: 0.55; }
+
+/* app header, shared by all variants (the one bit of shared chrome) */
+.appbar { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.5rem; border-bottom: 1px solid var(--border); background: var(--background); }
+.brand { display: flex; align-items: baseline; gap: 0.5rem; font-weight: 700; letter-spacing: -0.03em; }
+.brand em { font-style: normal; color: var(--primary); }
+.searchbox {
+  flex: 1; max-width: 480px; display: flex; align-items: center; gap: 0.6rem;
+  background: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: 0.5rem 0.9rem; color: var(--muted-foreground); font-size: 0.875rem;
+}
+
+/* ── Variant A — Map-first ─────────────────────────────────── */
+.vA { position: relative; height: calc(100vh - 57px); overflow: hidden; }
+.vA-map { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.vA-scrim { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--background) 82%, transparent) 0%, transparent 38%, transparent 62%, color-mix(in srgb, var(--background) 55%, transparent) 100%); }
+.vA-panel { position: absolute; top: 1.25rem; left: 1.25rem; width: 340px; padding: 1.25rem; backdrop-filter: blur(12px); background: color-mix(in srgb, var(--card) 88%, transparent); }
+.vA-scores { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 0.75rem; margin: 1.1rem 0; }
+.vA-scores .s span { display: block; }
+.vA-delta { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.6rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+.vA-rail { position: absolute; top: 0; right: 0; bottom: 0; width: 360px; background: var(--card); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+.vA-railhead { padding: 1rem 1.15rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.vA-list { overflow-y: auto; flex: 1; }
+.arow { display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 1rem; padding: 0.8rem 1.15rem; border-bottom: 1px solid var(--border); background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; text-align: left; }
+.arow:hover { background: var(--muted); }
+.arow[aria-current="true"] { background: var(--muted); box-shadow: inset 3px 0 0 var(--primary); }
+.arow b { font-weight: 600; font-size: 0.9375rem; }
+.arow .cat { color: var(--muted-foreground); }
+.arow .d { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.75rem; align-self: center; }
+.vA-detail { position: absolute; top: 0; right: 0; bottom: 0; width: 360px; background: var(--card); border-left: 1px solid var(--border); padding: 1.15rem; transform: translateX(100%); transition: transform .22s ease; }
+.vA-detail[data-open="true"] { transform: none; }
+
+/* ── Variant B — Editorial scorecard ───────────────────────── */
+.vB { max-width: 1120px; margin: 0 auto; padding: 0 1.5rem 6rem; }
+.vB-hero { padding: 4.5rem 0 2.5rem; }
+.vB-hero h1 { font-size: clamp(2rem, 4.5vw, 3.25rem); line-height: 1.02; margin: 0.75rem 0 0; font-weight: 800; letter-spacing: -0.04em; max-width: 16ch; }
+.vB-figs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin: 3.5rem 0 0; }
+.vB-fig { border-top: 2px solid var(--foreground); padding-top: 1rem; }
+.vB-fig:first-child { border-top-color: var(--primary); }
+.vB-fig .num { font-size: clamp(3.5rem, 9vw, 6.5rem); display: block; margin: 0.75rem 0 0.5rem; }
+.vB-fig:first-child .num { color: var(--primary); }
+.vB-fig p { color: var(--muted-foreground); font-size: 0.875rem; margin: 0; max-width: 26ch; }
+.vB-verdict { margin: 3rem 0 0; padding: 1.5rem 1.75rem; background: var(--muted); border-radius: var(--radius); border-left: 3px solid var(--primary); font-size: 1.0625rem; line-height: 1.55; }
+.vB-section { margin-top: 4.5rem; }
+.vB-section > header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.25rem; }
+.vB-mapwrap { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+.vB-mapwrap img { width: 100%; height: 420px; object-fit: cover; }
+.vB-tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.vB-tier { padding: 1.25rem; }
+.vB-tier ul { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.vB-tier li { display: flex; justify-content: space-between; align-items: center; font-size: 0.9375rem; }
+.vB-alist { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
+.vB-alist .arow { grid-template-columns: 1fr auto; }
+/* full-height drawer — overlays the whole viewport, not just below the appbar */
+.vB-backdrop { position: fixed; inset: 0; z-index: 49; background: color-mix(in srgb, var(--background) 55%, transparent); opacity: 0; pointer-events: none; transition: opacity .22s ease; border: 0; padding: 0; }
+.vB-backdrop[data-open="true"] { opacity: 1; pointer-events: auto; }
+.vB-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 50;
+  width: min(420px, 100%); background: var(--card); border-left: 1px solid var(--border);
+  padding: 1.5rem; overflow-y: auto; transform: translateX(100%); transition: transform .22s ease;
+}
+.vB-drawer[data-open="true"] { transform: none; }
+
+/* ── Variant C — Split dashboard ───────────────────────────── */
+.vC { display: grid; grid-template-columns: 400px 1fr; height: calc(100vh - 57px); overflow: hidden; }
+.vC-left { border-right: 1px solid var(--border); overflow-y: auto; padding: 1.5rem; position: relative; }
+.vC-metric { margin-top: 1.5rem; }
+.vC-metric .top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
+.vC-metric .num { font-size: 1.75rem; }
+.vC-check { list-style: none; padding: 0; margin: 0.75rem 0 0; display: grid; gap: 0.45rem; }
+.vC-check li { display: flex; justify-content: space-between; font-size: 0.875rem; }
+.vC-right { display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; }
+.vC-map { position: relative; overflow: hidden; }
+.vC-map img { width: 100%; height: 100%; object-fit: cover; }
+.vC-bottom { border-top: 1px solid var(--border); background: var(--card); height: 300px; display: flex; flex-direction: column; }
+.vC-tabs { display: flex; gap: 0.25rem; padding: 0.75rem 1rem 0; overflow-x: auto; }
+.vC-tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 0.5rem 0.75rem; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.vC-tab[aria-selected="true"] { color: var(--foreground); border-bottom-color: var(--primary); }
+.vC-cards { display: flex; gap: 0.75rem; padding: 1rem; overflow-x: auto; }
+.vC-acard { min-width: 240px; padding: 1rem; }
+.vC-detail { position: absolute; inset: 0; background: var(--card); padding: 1.5rem; transform: translateX(-100%); transition: transform .22s ease; overflow-y: auto; }
+.vC-detail[data-open="true"] { transform: none; }
+
+/* detail card body, shared */
+.detail h3 { margin: 0.4rem 0 0.2rem; font-size: 1.35rem; letter-spacing: -0.03em; }
+.detail dl { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1rem; margin: 1.25rem 0 0; font-size: 0.875rem; }
+.detail dt { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; align-self: center; }
+.detail dd { margin: 0; }
+
+/* ── Prototype chrome — never ships ────────────────────────── */
+#bar {
+  position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 999;
+  display: flex; align-items: stretch; gap: 0; background: #0B0C0E; color: #fff;
+  border: 1px solid #3A3F47; border-radius: 999px; box-shadow: 0 12px 40px rgba(0,0,0,.55);
+  font-family: "Geist Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.05em; overflow: hidden;
+}
+#bar button { background: none; border: 0; color: #fff; padding: 0 12px; height: 40px; text-transform: uppercase; }
+#bar button:hover { background: #23262B; }
+#bar .sep { width: 1px; background: #3A3F47; }
+#bar .label { display: flex; align-items: center; padding: 0 14px; white-space: nowrap; }
+#bar .label b { color: #F4511E; font-weight: 600; margin-right: 6px; }
+#tokens {
+  position: fixed; bottom: 4.5rem; left: 50%; transform: translateX(-50%); z-index: 998;
+  width: min(880px, calc(100vw - 2rem)); max-height: 46vh; overflow: auto; display: none;
+  background: #0B0C0E; color: #fff; border: 1px solid #3A3F47; border-radius: 12px; padding: 1rem;
+  font-family: "Geist Mono", ui-monospace, monospace; font-size: 11px;
+}
+#tokens[data-open="true"] { display: block; }
+#tokens table { width: 100%; border-collapse: collapse; }
+#tokens td { padding: 4px 8px; border-bottom: 1px solid #23262B; }
+#tokens .sw { width: 26px; height: 18px; border-radius: 4px; border: 1px solid #3A3F47; display: block; }
+#tokens .role { color: #8B949E; }
+
+@media (max-width: 900px) {
+  .vA-rail, .vA-detail { width: 100%; top: auto; height: 55%; border-left: 0; border-top: 1px solid var(--border); }
+  .vA-panel { width: auto; right: 1.25rem; }
+  .vB-figs, .vB-tiers, .vB-alist { grid-template-columns: 1fr; }
+  .vC { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; }
+  .vC-left { border-right: 0; border-bottom: 1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="tokens" data-open="false"></div>
+<div id="bar"></div>
+
+<script>
+/* ── fake data ─────────────────────────────────────────────── */
+const DATA = {
+  label: "1400 S Congress Ave, Austin, TX 78704",
+  short: "1400 S Congress Ave",
+  walk: 73, drive: 92, delta: 19,
+  density: 33, band: "Dense",
+  why: "Dense — 33 places per km² within 1 km. Groceries, transit, cafés and restaurants are all inside a 1 km walk; no pharmacy or library is.",
+  driveWhy: "A car adds 19 points here — it reaches the pharmacy and library that walking misses.",
+  tiers: [
+    { name: "Essential", weight: 3, items: [
+      { cat: "grocery", label: "Grocery", has: true, d: 120 },
+      { cat: "public_transportation_station", label: "Transit", has: true, d: 210 },
+      { cat: "school", label: "School", has: true, d: 850 },
+      { cat: "pharmacy", label: "Pharmacy", has: false, d: null } ] },
+    { name: "Useful", weight: 2, items: [
+      { cat: "cafe", label: "Café", has: true, d: 180 },
+      { cat: "restaurant", label: "Restaurant", has: true, d: 260 },
+      { cat: "bank", label: "Bank", has: true, d: 480 },
+      { cat: "park", label: "Park", has: true, d: 640 } ] },
+    { name: "Amenity", weight: 1, items: [
+      { cat: "bar", label: "Bar", has: true, d: 150 },
+      { cat: "clothing_store", label: "Clothing", has: true, d: 300 },
+      { cat: "fitness_center", label: "Fitness", has: true, d: 720 },
+      { cat: "library", label: "Library", has: false, d: null } ] },
+  ],
+  amenities: [
+    { n: "Royal Blue Grocery", c: "Grocery", d: 120, addr: "1414 S Congress Ave", meta: "Open until 10 PM", tel: "(512) 707-2210" },
+    { n: "The Continental Club", c: "Bar", d: 150, addr: "1315 S Congress Ave", meta: "Open until 2 AM", tel: "(512) 441-2444" },
+    { n: "Jo's Coffee", c: "Café", d: 180, addr: "1300 S Congress Ave", meta: "Open until 7 PM", tel: "(512) 444-3800" },
+    { n: "801 — S Congress / Elizabeth", c: "Transit", d: 210, addr: "S Congress Ave & Elizabeth St", meta: "MetroRapid 801, 803", tel: null },
+    { n: "Home Slice Pizza", c: "Restaurant", d: 260, addr: "1415 S Congress Ave", meta: "Open until 11 PM", tel: "(512) 444-7437" },
+    { n: "Prototype Vintage", c: "Clothing", d: 300, addr: "1700 S Congress Ave", meta: "Open until 7 PM", tel: "(512) 447-3556" },
+    { n: "Frost Bank", c: "Bank", d: 480, addr: "1601 S Congress Ave", meta: "Closed — opens 9 AM", tel: "(512) 473-4343" },
+    { n: "Big Stacy Park", c: "Park", d: 640, addr: "700 E Live Oak St", meta: "Open 24 h", tel: null },
+    { n: "Castle Hill Fitness South", c: "Fitness", d: 720, addr: "1112 S Congress Ave", meta: "Open until 9 PM", tel: "(512) 478-4567" },
+    { n: "Travis Heights Elementary", c: "School", d: 850, addr: "2010 Alameda Dr", meta: "Public, K–5", tel: "(512) 414-4400" },
+  ],
+};
+const MAPS = {
+  light: ["img/light-v11.png", "img/streets-v12.png"],
+  dark:  ["img/dark-v11.png", "img/navigation-night-v1.png"],
+};
+const MAP_NAMES = { light: ["light-v11", "streets-v12"], dark: ["dark-v11", "navigation-night-v1"] };
+const FONT_NAMES = { 1: "Geist + Geist Mono", 2: "Space Grotesk + Space Mono", 3: "Inter Tight + JetBrains Mono" };
+const VARIANT_NAMES = { A: "Map-first", B: "Editorial scorecard", C: "Split dashboard" };
+
+/* ── url state ─────────────────────────────────────────────── */
+const P = new URLSearchParams(location.search);
+const state = {
+  variant: (P.get("variant") || "A").toUpperCase(),
+  theme: P.get("theme") || "dark",
+  font: P.get("font") || "1",
+  map: P.get("map") || "0",
+};
+function push() {
+  const q = new URLSearchParams(state);
+  history.replaceState(null, "", "?" + q);
+  render();
+}
+const m = () => (n) => n;
+const dist = (d) => (d >= 1000 ? (d / 1000).toFixed(1) + " km" : d + " m");
+const mapSrc = () => MAPS[state.theme][+state.map];
+
+/* ── shared fragments ──────────────────────────────────────── */
+const appbar = () => `
+  <div class="appbar">
+    <div class="brand">Address<em>Insights</em></div>
+    <div class="searchbox"><span>⌕</span><span>${DATA.label}</span></div>
+    <div style="flex:1"></div>
+    <button class="btn-ghost">Copy link</button>
+  </div>`;
+
+const amenityRow = (a, i) => `
+  <button class="arow" data-i="${i}">
+    <b>${a.n}</b>
+    <span class="d">${dist(a.d)}</span>
+    <span class="cat mono">${a.c}</span>
+  </button>`;
+
+const detailCard = (a, closeCls) => a ? `
+  <div class="detail">
+    <button class="btn-ghost ${closeCls}">← Back</button>
+    <p class="mono eyebrow" style="margin:1.25rem 0 0">${a.c}</p>
+    <h3>${a.n}</h3>
+    <span class="pill">${dist(a.d)} away</span>
+    <dl>
+      <dt>Address</dt><dd>${a.addr}</dd>
+      <dt>Status</dt><dd>${a.meta}</dd>
+      ${a.tel ? `<dt>Phone</dt><dd>${a.tel}</dd>` : ""}
+      <dt>Category</dt><dd>${a.c}</dd>
+    </dl>
+    <div style="margin-top:1.5rem"><button class="btn-primary">Directions</button></div>
+  </div>` : "";
+
+let selected = null;
+
+/* ── Variant A — Map-first ─────────────────────────────────── */
+function VariantA() {
+  const a = selected != null ? DATA.amenities[selected] : null;
+  return `${appbar()}
+  <div class="vA">
+    <img class="vA-map" src="${mapSrc()}" alt="map" />
+    <div class="vA-scrim"></div>
+
+    <section class="card vA-panel">
+      <p class="mono eyebrow" style="margin:0">Address Insights</p>
+      <h1 style="font-size:1.25rem;margin:.5rem 0 0;letter-spacing:-.03em">${DATA.short}</h1>
+      <div class="vA-scores">
+        <div class="s">
+          <span class="mono eyebrow">Walking</span>
+          <span class="num" style="font-size:3rem;color:var(--primary)">${DATA.walk}</span>
+        </div>
+        <div class="s">
+          <span class="mono eyebrow">Driving</span>
+          <span class="num" style="font-size:3rem">${DATA.drive}</span>
+        </div>
+        <div class="vA-delta">
+          <span class="pill pill-primary">+${DATA.delta} with a car</span>
+          <span class="mono eyebrow">${DATA.band} · ${DATA.density}/km²</span>
+        </div>
+      </div>
+      <p style="font-size:.875rem;color:var(--muted-foreground);margin:0;line-height:1.5">${DATA.why}</p>
+    </section>
+
+    <aside class="vA-rail">
+      <div class="vA-railhead">
+        <span class="mono eyebrow">${DATA.amenities.length} places within 1 km</span>
+        <span class="mono eyebrow">Dist ↑</span>
+      </div>
+      <div class="vA-list">${DATA.amenities.map(amenityRow).join("")}</div>
+    </aside>
+    <aside class="vA-detail" data-open="${a ? "true" : "false"}">${detailCard(a, "js-close")}</aside>
+  </div>`;
+}
+
+/* ── Variant B — Editorial scorecard ───────────────────────── */
+function VariantB() {
+  const a = selected != null ? DATA.amenities[selected] : null;
+  return `${appbar()}
+  <div class="vB">
+    <header class="vB-hero">
+      <p class="mono eyebrow" style="margin:0">Walkability report</p>
+      <h1>${DATA.label}</h1>
+      <div class="vB-figs">
+        <div class="vB-fig">
+          <span class="mono eyebrow">Walking score</span>
+          <span class="num">${DATA.walk}</span>
+          <p>Tier-weighted category coverage within 1 km, plus a capped count of nearby places.</p>
+        </div>
+        <div class="vB-fig">
+          <span class="mono eyebrow">Driving score</span>
+          <span class="num">${DATA.drive}</span>
+          <p>The same categories at 5 km. A car adds <b>+${DATA.delta}</b> points here.</p>
+        </div>
+        <div class="vB-fig">
+          <span class="mono eyebrow">Amenity density</span>
+          <span class="num">${DATA.density}</span>
+          <p><span class="pill">${DATA.band}</span> — places per km² within 1 km.</p>
+        </div>
+      </div>
+      <div class="vB-verdict">${DATA.why}</div>
+    </header>
+
+    <section class="vB-section">
+      <header><h2 class="mono eyebrow" style="margin:0">The neighbourhood</h2><span class="mono eyebrow">1 km radius</span></header>
+      <div class="vB-mapwrap"><img src="${mapSrc()}" alt="map" /></div>
+    </section>
+
+    <section class="vB-section">
+      <header><h2 class="mono eyebrow" style="margin:0">Category coverage</h2><span class="mono eyebrow">10 of 12 present</span></header>
+      <div class="vB-tiers">
+        ${DATA.tiers.map(t => `
+          <div class="card vB-tier">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <span class="mono" style="font-weight:600">${t.name}</span>
+              <span class="mono eyebrow">×${t.weight}</span>
+            </div>
+            <ul>${t.items.map(i => `
+              <li><span class="${i.has ? "" : "miss"}">${i.label}</span>
+                  <span class="mono ${i.has ? "tick" : "miss"}">${i.has ? dist(i.d) : "none"}</span></li>`).join("")}</ul>
+          </div>`).join("")}
+      </div>
+    </section>
+
+    <section class="vB-section">
+      <header><h2 class="mono eyebrow" style="margin:0">What's nearby</h2><span class="mono eyebrow">Nearest first</span></header>
+      <div class="vB-alist">${DATA.amenities.map(amenityRow).join("")}</div>
+    </section>
+  </div>
+  <button class="vB-backdrop js-close" data-open="${a ? "true" : "false"}" aria-label="Close"></button>
+  <aside class="vB-drawer" data-open="${a ? "true" : "false"}">${detailCard(a, "js-close")}</aside>`;
+}
+
+/* ── Variant C — Split dashboard ───────────────────────────── */
+function VariantC() {
+  const a = selected != null ? DATA.amenities[selected] : null;
+  const metric = (label, val, note, primary) => `
+    <div class="vC-metric">
+      <div class="top"><span class="mono eyebrow">${label}</span><span class="num">${val}</span></div>
+      <div class="meter ${primary ? "is-primary" : ""}"><i style="width:${val}%"></i></div>
+      <p style="font-size:.8125rem;color:var(--muted-foreground);margin:.5rem 0 0;line-height:1.45">${note}</p>
+    </div>`;
+  return `${appbar()}
+  <div class="vC">
+    <aside class="vC-left">
+      <p class="mono eyebrow" style="margin:0">Insights for</p>
+      <h1 style="font-size:1.375rem;margin:.4rem 0 1rem;letter-spacing:-.03em">${DATA.short}</h1>
+      <span class="pill pill-primary">${DATA.band} · ${DATA.density} places/km²</span>
+      ${metric("Walking", DATA.walk, DATA.why, true)}
+      ${metric("Driving", DATA.drive, DATA.driveWhy, false)}
+      <hr class="rule" style="margin:1.75rem 0 1.25rem" />
+      <span class="mono eyebrow">Category coverage</span>
+      ${DATA.tiers.map(t => `
+        <div style="margin-top:1rem">
+          <span class="mono eyebrow" style="opacity:.7">${t.name} ×${t.weight}</span>
+          <ul class="vC-check">${t.items.map(i => `
+            <li><span class="${i.has ? "" : "miss"}">${i.label}</span>
+                <span class="mono ${i.has ? "tick" : "miss"}">${i.has ? dist(i.d) : "—"}</span></li>`).join("")}</ul>
+        </div>`).join("")}
+      <div class="vC-detail" data-open="${a ? "true" : "false"}">${detailCard(a, "js-close")}</div>
+    </aside>
+    <div class="vC-right">
+      <div class="vC-map"><img src="${mapSrc()}" alt="map" /></div>
+      <div class="vC-bottom">
+        <div class="vC-tabs">
+          <button class="vC-tab" aria-selected="true">All 10</button>
+          ${["Grocery","Transit","Café","Restaurant","Park","Bank","Bar","Fitness","Clothing","School"].map(c => `<button class="vC-tab">${c}</button>`).join("")}
+        </div>
+        <div class="vC-cards">
+          ${DATA.amenities.map((x, i) => `
+            <button class="card vC-acard arow" data-i="${i}" style="display:block;text-align:left">
+              <span class="mono eyebrow">${x.c}</span>
+              <b style="display:block;margin:.4rem 0 .5rem;font-size:1rem">${x.n}</b>
+              <span class="mono" style="color:var(--primary)">${dist(x.d)}</span>
+            </button>`).join("")}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── render + prototype chrome ─────────────────────────────── */
+const VARIANTS = { A: VariantA, B: VariantB, C: VariantC };
+
+function render() {
+  document.documentElement.dataset.theme = state.theme;
+  document.documentElement.dataset.font = state.font;
+  document.getElementById("app").innerHTML = (VARIANTS[state.variant] || VariantA)();
+  document.querySelectorAll(".arow").forEach(el =>
+    el.addEventListener("click", () => { selected = +el.dataset.i; render(); }));
+  document.querySelectorAll(".js-close").forEach(el =>
+    el.addEventListener("click", () => { selected = null; render(); }));
+  renderBar();
+  renderTokens();
+}
+
+function renderBar() {
+  const keys = Object.keys(VARIANTS);
+  document.getElementById("bar").innerHTML = `
+    <button data-act="prev">←</button>
+    <span class="label"><b>${state.variant}</b> ${VARIANT_NAMES[state.variant]}</span>
+    <button data-act="next">→</button>
+    <span class="sep"></span>
+    <button data-act="theme">${state.theme === "dark" ? "◑ dark" : "◐ light"}</button>
+    <span class="sep"></span>
+    <button data-act="font">Aa ${FONT_NAMES[state.font].split(" + ")[0]}</button>
+    <span class="sep"></span>
+    <button data-act="map">▦ ${MAP_NAMES[state.theme][+state.map]}</button>
+    <span class="sep"></span>
+    <button data-act="tokens">{ }</button>`;
+  document.querySelectorAll("#bar button").forEach(b => b.addEventListener("click", () => {
+    const a = b.dataset.act, i = keys.indexOf(state.variant);
+    if (a === "prev") state.variant = keys[(i - 1 + keys.length) % keys.length];
+    if (a === "next") state.variant = keys[(i + 1) % keys.length];
+    if (a === "theme") state.theme = state.theme === "dark" ? "light" : "dark";
+    if (a === "font") state.font = String((+state.font % 3) + 1);
+    if (a === "map") state.map = state.map === "0" ? "1" : "0";
+    if (a === "tokens") { const t = document.getElementById("tokens"); t.dataset.open = t.dataset.open === "true" ? "false" : "true"; return; }
+    push();
+  }));
+}
+
+const TOKEN_ROLES = {
+  "--background": "page", "--foreground": "body text", "--card": "Card, Popover surface",
+  "--card-foreground": "text on card", "--primary": "CTA, active tab, meter fill, headline numeral, focus ring",
+  "--primary-foreground": "text on orange", "--secondary": "secondary Button", "--muted": "inset panels, meter track, search field",
+  "--muted-foreground": "captions, labels, absent categories", "--accent": "hover/selected row", "--border": "all hairlines",
+  "--input": "field border", "--ring": "focus ring", "--destructive": "errors only",
+};
+function renderTokens() {
+  const cs = getComputedStyle(document.documentElement);
+  document.getElementById("tokens").innerHTML = `
+    <div style="margin-bottom:.75rem;color:#8B949E">
+      shadcn tokens · <b style="color:#fff">${state.theme}</b> · type: <b style="color:#fff">${FONT_NAMES[state.font]}</b>
+      · map: <b style="color:#fff">mapbox/${MAP_NAMES[state.theme][+state.map]}</b>
+    </div>
+    <table>${Object.entries(TOKEN_ROLES).map(([k, role]) => {
+      const v = cs.getPropertyValue(k).trim();
+      return `<tr><td><span class="sw" style="background:${v}"></span></td><td>${k}</td><td>${v}</td><td class="role">${role}</td></tr>`;
+    }).join("")}</table>`;
+}
+
+addEventListener("keydown", (e) => {
+  if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+  const keys = Object.keys(VARIANTS), i = keys.indexOf(state.variant);
+  if (e.key === "ArrowLeft") { state.variant = keys[(i - 1 + keys.length) % keys.length]; push(); }
+  if (e.key === "ArrowRight") { state.variant = keys[(i + 1) % keys.length]; push(); }
+  if (e.key.toLowerCase() === "t") { state.theme = state.theme === "dark" ? "light" : "dark"; push(); }
+  if (e.key.toLowerCase() === "f") { state.font = String((+state.font % 3) + 1); push(); }
+});
+
+render();
+</script>
+</body>
+</html>
