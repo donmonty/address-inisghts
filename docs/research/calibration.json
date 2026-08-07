@@ -1,0 +1,538 @@
+{
+ "Herald Square, NYC": {
+  "query": "1270 Broadway, New York, NY 10001",
+  "resolved": "1270 Broadway, New York, New York 10001, United States",
+  "lon": -73.987997,
+  "lat": 40.748745,
+  "cats": {
+   "grocery": {
+    "returned": 25,
+    "nearest": 81,
+    "furthest": 443,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "pharmacy": {
+    "returned": 25,
+    "nearest": 11,
+    "furthest": 526,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "public_transportation_station": {
+    "returned": 25,
+    "nearest": 138,
+    "furthest": 756,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "school": {
+    "returned": 25,
+    "nearest": 37,
+    "furthest": 251,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "restaurant": {
+    "returned": 25,
+    "nearest": 15,
+    "furthest": 119,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "cafe": {
+    "returned": 25,
+    "nearest": 84,
+    "furthest": 226,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "park": {
+    "returned": 25,
+    "nearest": 28,
+    "furthest": 2064,
+    "n800": 7,
+    "n1000": 7,
+    "n5000": 25,
+    "capped": true
+   },
+   "bank": {
+    "returned": 25,
+    "nearest": 10,
+    "furthest": 254,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "bar": {
+    "returned": 25,
+    "nearest": 44,
+    "furthest": 218,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "fitness_center": {
+    "returned": 25,
+    "nearest": 147,
+    "furthest": 348,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "clothing_store": {
+    "returned": 25,
+    "nearest": 5,
+    "furthest": 146,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "library": {
+    "returned": 25,
+    "nearest": 206,
+    "furthest": 939,
+    "n800": 20,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   }
+  },
+  "dedup800": {
+   "by_mapbox_id": 277,
+   "by_location": 260,
+   "density_id_per_km2": 137.8,
+   "density_loc_per_km2": 129.3
+  },
+  "dedup1000": {
+   "by_mapbox_id": 282,
+   "by_location": 265,
+   "density_id_per_km2": 89.8,
+   "density_loc_per_km2": 84.4
+  },
+  "dedup5000": {
+   "by_mapbox_id": 300,
+   "by_location": 283,
+   "density_id_per_km2": 3.8,
+   "density_loc_per_km2": 3.6
+  }
+ },
+ "South Congress, Austin": {
+  "query": "1200 S Congress Ave, Austin, TX 78704",
+  "resolved": "1200 South Congress Avenue, Austin, Texas 78704, United States",
+  "lon": -97.749071,
+  "lat": 30.252212,
+  "cats": {
+   "grocery": {
+    "returned": 25,
+    "nearest": 558,
+    "furthest": 2077,
+    "n800": 2,
+    "n1000": 2,
+    "n5000": 25,
+    "capped": true
+   },
+   "pharmacy": {
+    "returned": 25,
+    "nearest": 1416,
+    "furthest": 4402,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 25,
+    "capped": true
+   },
+   "public_transportation_station": {
+    "returned": 25,
+    "nearest": 1108,
+    "furthest": 59940,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 6,
+    "capped": true
+   },
+   "school": {
+    "returned": 25,
+    "nearest": 154,
+    "furthest": 1791,
+    "n800": 11,
+    "n1000": 12,
+    "n5000": 25,
+    "capped": true
+   },
+   "restaurant": {
+    "returned": 25,
+    "nearest": 71,
+    "furthest": 660,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "cafe": {
+    "returned": 25,
+    "nearest": 137,
+    "furthest": 1306,
+    "n800": 11,
+    "n1000": 15,
+    "n5000": 25,
+    "capped": true
+   },
+   "park": {
+    "returned": 25,
+    "nearest": 709,
+    "furthest": 2898,
+    "n800": 1,
+    "n1000": 2,
+    "n5000": 25,
+    "capped": true
+   },
+   "bank": {
+    "returned": 25,
+    "nearest": 560,
+    "furthest": 1592,
+    "n800": 2,
+    "n1000": 2,
+    "n5000": 25,
+    "capped": true
+   },
+   "bar": {
+    "returned": 25,
+    "nearest": 45,
+    "furthest": 1294,
+    "n800": 12,
+    "n1000": 12,
+    "n5000": 25,
+    "capped": true
+   },
+   "fitness_center": {
+    "returned": 25,
+    "nearest": 222,
+    "furthest": 1526,
+    "n800": 5,
+    "n1000": 6,
+    "n5000": 25,
+    "capped": true
+   },
+   "clothing_store": {
+    "returned": 25,
+    "nearest": 15,
+    "furthest": 370,
+    "n800": 25,
+    "n1000": 25,
+    "n5000": 25,
+    "capped": true
+   },
+   "library": {
+    "returned": 25,
+    "nearest": 231,
+    "furthest": 4735,
+    "n800": 1,
+    "n1000": 1,
+    "n5000": 25,
+    "capped": true
+   }
+  },
+  "dedup800": {
+   "by_mapbox_id": 95,
+   "by_location": 91,
+   "density_id_per_km2": 47.2,
+   "density_loc_per_km2": 45.3
+  },
+  "dedup1000": {
+   "by_mapbox_id": 102,
+   "by_location": 98,
+   "density_id_per_km2": 32.5,
+   "density_loc_per_km2": 31.2
+  },
+  "dedup5000": {
+   "by_mapbox_id": 281,
+   "by_location": 276,
+   "density_id_per_km2": 3.6,
+   "density_loc_per_km2": 3.5
+  }
+ },
+ "Legacy Dr, Plano": {
+  "query": "5000 Legacy Dr, Plano, TX 75024",
+  "resolved": "5000 Legacy Drive, Plano, Texas 75024, United States",
+  "lon": -96.797614,
+  "lat": 33.069539,
+  "cats": {
+   "grocery": {
+    "returned": 25,
+    "nearest": 1609,
+    "furthest": 4856,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 25,
+    "capped": true
+   },
+   "pharmacy": {
+    "returned": 25,
+    "nearest": 615,
+    "furthest": 4257,
+    "n800": 3,
+    "n1000": 3,
+    "n5000": 25,
+    "capped": true
+   },
+   "public_transportation_station": {
+    "returned": 25,
+    "nearest": 9605,
+    "furthest": 20955,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 0,
+    "capped": true
+   },
+   "school": {
+    "returned": 25,
+    "nearest": 597,
+    "furthest": 2640,
+    "n800": 3,
+    "n1000": 3,
+    "n5000": 25,
+    "capped": true
+   },
+   "restaurant": {
+    "returned": 25,
+    "nearest": 557,
+    "furthest": 2207,
+    "n800": 3,
+    "n1000": 3,
+    "n5000": 25,
+    "capped": true
+   },
+   "cafe": {
+    "returned": 25,
+    "nearest": 1049,
+    "furthest": 3651,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 25,
+    "capped": true
+   },
+   "park": {
+    "returned": 25,
+    "nearest": 1479,
+    "furthest": 5107,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 21,
+    "capped": true
+   },
+   "bank": {
+    "returned": 25,
+    "nearest": 37,
+    "furthest": 2181,
+    "n800": 5,
+    "n1000": 5,
+    "n5000": 25,
+    "capped": true
+   },
+   "bar": {
+    "returned": 25,
+    "nearest": 2000,
+    "furthest": 3555,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 25,
+    "capped": true
+   },
+   "fitness_center": {
+    "returned": 25,
+    "nearest": 440,
+    "furthest": 2590,
+    "n800": 4,
+    "n1000": 4,
+    "n5000": 25,
+    "capped": true
+   },
+   "clothing_store": {
+    "returned": 25,
+    "nearest": 1477,
+    "furthest": 2913,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 25,
+    "capped": true
+   },
+   "library": {
+    "returned": 25,
+    "nearest": 3570,
+    "furthest": 10780,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 3,
+    "capped": true
+   }
+  },
+  "dedup800": {
+   "by_mapbox_id": 18,
+   "by_location": 17,
+   "density_id_per_km2": 9.0,
+   "density_loc_per_km2": 8.5
+  },
+  "dedup1000": {
+   "by_mapbox_id": 18,
+   "by_location": 17,
+   "density_id_per_km2": 5.7,
+   "density_loc_per_km2": 5.4
+  },
+  "dedup5000": {
+   "by_mapbox_id": 249,
+   "by_location": 242,
+   "density_id_per_km2": 3.2,
+   "density_loc_per_km2": 3.1
+  }
+ },
+ "Marfa, TX": {
+  "query": "105 W Murphy St, Marfa, TX 79843",
+  "resolved": "105 West Murphy Street, Marfa, Texas 79843, United States",
+  "lon": -104.02297,
+  "lat": 30.31454,
+  "cats": {
+   "grocery": {
+    "returned": 25,
+    "nearest": 710,
+    "furthest": 92074,
+    "n800": 1,
+    "n1000": 3,
+    "n5000": 3,
+    "capped": true
+   },
+   "pharmacy": {
+    "returned": 25,
+    "nearest": 392,
+    "furthest": 93671,
+    "n800": 1,
+    "n1000": 1,
+    "n5000": 1,
+    "capped": true
+   },
+   "public_transportation_station": {
+    "returned": 1,
+    "nearest": 168242,
+    "furthest": 168242,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 0,
+    "capped": false
+   },
+   "school": {
+    "returned": 0,
+    "nearest": null,
+    "furthest": null,
+    "n800": 0,
+    "n1000": 0,
+    "n5000": 0,
+    "capped": false
+   },
+   "restaurant": {
+    "returned": 25,
+    "nearest": 254,
+    "furthest": 34727,
+    "n800": 10,
+    "n1000": 13,
+    "n5000": 16,
+    "capped": true
+   },
+   "cafe": {
+    "returned": 25,
+    "nearest": 347,
+    "furthest": 117635,
+    "n800": 5,
+    "n1000": 5,
+    "n5000": 5,
+    "capped": true
+   },
+   "park": {
+    "returned": 25,
+    "nearest": 496,
+    "furthest": 237719,
+    "n800": 1,
+    "n1000": 2,
+    "n5000": 3,
+    "capped": true
+   },
+   "bank": {
+    "returned": 25,
+    "nearest": 748,
+    "furthest": 92082,
+    "n800": 1,
+    "n1000": 1,
+    "n5000": 1,
+    "capped": true
+   },
+   "bar": {
+    "returned": 25,
+    "nearest": 280,
+    "furthest": 91542,
+    "n800": 4,
+    "n1000": 4,
+    "n5000": 4,
+    "capped": true
+   },
+   "fitness_center": {
+    "returned": 25,
+    "nearest": 359,
+    "furthest": 93297,
+    "n800": 2,
+    "n1000": 3,
+    "n5000": 3,
+    "capped": true
+   },
+   "clothing_store": {
+    "returned": 25,
+    "nearest": 331,
+    "furthest": 92536,
+    "n800": 4,
+    "n1000": 4,
+    "n5000": 4,
+    "capped": true
+   },
+   "library": {
+    "returned": 25,
+    "nearest": 413,
+    "furthest": 213879,
+    "n800": 1,
+    "n1000": 1,
+    "n5000": 1,
+    "capped": true
+   }
+  },
+  "dedup800": {
+   "by_mapbox_id": 30,
+   "by_location": 30,
+   "density_id_per_km2": 14.9,
+   "density_loc_per_km2": 14.9
+  },
+  "dedup1000": {
+   "by_mapbox_id": 37,
+   "by_location": 37,
+   "density_id_per_km2": 11.8,
+   "density_loc_per_km2": 11.8
+  },
+  "dedup5000": {
+   "by_mapbox_id": 41,
+   "by_location": 41,
+   "density_id_per_km2": 0.5,
+   "density_loc_per_km2": 0.5
+  }
+ }
+}
