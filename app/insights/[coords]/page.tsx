@@ -2,7 +2,9 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { CoverageCards } from "@/components/insights/coverage-cards";
+import { MapBand } from "@/components/insights/map-band";
 import { NearbyList } from "@/components/insights/nearby-list";
+import { NearbyProvider } from "@/components/insights/nearby-provider";
 import { ScoreHero } from "@/components/insights/score-hero";
 import { VerdictStrip } from "@/components/insights/verdict-strip";
 import { getAddressInsight, type Point } from "@/lib/amenities";
@@ -14,14 +16,16 @@ import { getAddressInsight, type Point } from "@/lib/amenities";
  * no absolute-URL construction per environment. Coordinates are the identity;
  * `q` is cosmetic and only ever displayed.
  *
- * The editorial scorecard runs top to bottom: hero, verdict strip, category
- * coverage, the nearby places. The map band slots in between the strip and the
- * coverage cards in the following ticket, as does the `error.tsx` /
- * `loading.tsx` treatment of the throws behind `getAddressInsight`.
+ * The editorial scorecard runs top to bottom: hero, verdict strip, map band,
+ * category coverage, the nearby places. The `error.tsx` / `loading.tsx`
+ * treatment of the throws behind `getAddressInsight` follows in #18.
  *
- * `NearbyList` is the page's only Client Component, and it receives the whole
- * insight because both radii are already in it — the 5 km expander is a state
- * change, never a request.
+ * `NearbyProvider` holds the one `{ radius, filter }` the map band and the list
+ * both read, which is what makes "the map renders exactly the current list" a
+ * property of the page rather than a thing two components have to agree on. It
+ * receives the whole insight because both radii are already in it — the 5 km
+ * expander is a state change, never a request. `CoverageCards` sits between the
+ * two and stays a Server Component by being passed through as `children`.
  */
 export default async function InsightsPage({
   params,
@@ -40,8 +44,11 @@ export default async function InsightsPage({
     <main className="mx-auto w-full max-w-[1120px] flex-1 px-6 pb-24">
       <ScoreHero label={label} insight={insight} />
       <VerdictStrip verdict={insight.verdict} />
-      <CoverageCards tiers={insight.tiers} />
-      <NearbyList insight={insight} />
+      <NearbyProvider insight={insight}>
+        <MapBand address={point} />
+        <CoverageCards tiers={insight.tiers} />
+        <NearbyList />
+      </NearbyProvider>
     </main>
   );
 }
