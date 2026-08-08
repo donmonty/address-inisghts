@@ -25,8 +25,6 @@ export const MAP_STYLES = {
   dark: "mapbox://styles/mapbox/navigation-night-v1",
 } as const;
 
-export type ColorScheme = keyof typeof MAP_STYLES;
-
 /**
  * The twelve category glyphs: `maki` path data on maki's own 15×15 grid,
  * vendored from `@mapbox/maki` (CC0) rather than resolved out of the style's

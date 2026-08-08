@@ -56,13 +56,14 @@ export function MapBand({ address }: { address: Point }) {
     if (!TOKEN || !container.current) return;
 
     const dark = window.matchMedia("(prefers-color-scheme: dark)");
+    const baseStyle = () => MAP_STYLES[dark.matches ? "dark" : "light"];
 
     let instance: mapboxgl.Map;
     try {
       mapboxgl.accessToken = TOKEN;
       instance = new mapboxgl.Map({
         container: container.current,
-        style: MAP_STYLES[dark.matches ? "dark" : "light"],
+        style: baseStyle(),
         center: [lng, lat],
         zoom: INITIAL_ZOOM,
         attributionControl: true,
@@ -82,8 +83,7 @@ export function MapBand({ address }: { address: Point }) {
     // The design has no theme toggle: dark follows the system preference, and
     // so does the base style. DOM markers survive `setStyle`, so the pins do
     // not have to be rebuilt here.
-    const followScheme = () =>
-      instance.setStyle(MAP_STYLES[dark.matches ? "dark" : "light"]);
+    const followScheme = () => instance.setStyle(baseStyle());
     dark.addEventListener("change", followScheme);
 
     const pinned = pins.current;
@@ -138,9 +138,12 @@ export function MapBand({ address }: { address: Point }) {
     });
   }, [view.amenities, loaded, lat, lng]);
 
+  // 40vw so the band reaches its 420px ceiling at the 1120px page width and
+  // sits at ~360px where the grids collapse, rather than topping out short of
+  // the height the design asks for.
   return (
     <div
-      className="mt-12 h-[clamp(18rem,34vw,26.25rem)] overflow-hidden rounded-lg border bg-muted"
+      className="mt-12 h-[clamp(19rem,40vw,26.25rem)] overflow-hidden rounded-lg border bg-muted"
       role="region"
       aria-label="Map of the nearby places"
     >
@@ -178,7 +181,6 @@ function addressPin(): HTMLElement {
 function amenityPin(amenity: Amenity): HTMLElement {
   const element = document.createElement("div");
   element.className = "amenity-pin";
-  element.title = amenity.name;
   element.innerHTML = `
     <svg viewBox="0 0 15 15" width="15" height="15" aria-hidden="true">
       <path d="${MAKI_GLYPHS[amenity.category]}"/>
