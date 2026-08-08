@@ -7,6 +7,7 @@ import { NearbyList } from "@/components/insights/nearby-list";
 import { NearbyProvider } from "@/components/insights/nearby-provider";
 import { PlaceDrawer } from "@/components/insights/place-drawer";
 import { ScoreHero } from "@/components/insights/score-hero";
+import { pageShell } from "@/components/insights/scorecard-shell";
 import { SelectionProvider } from "@/components/insights/selection-provider";
 import { VerdictStrip } from "@/components/insights/verdict-strip";
 import { getAddressInsight, type Point } from "@/lib/amenities";
@@ -49,7 +50,7 @@ export default async function InsightsPage({
   const insight = await getAddressInsight({ ...point, ip: await clientIp() });
 
   return (
-    <main className="mx-auto w-full max-w-[1120px] flex-1 px-6 pb-24">
+    <main className={pageShell}>
       <ScoreHero label={label} insight={insight} />
       <VerdictStrip verdict={insight.verdict} />
       <NearbyProvider insight={insight}>

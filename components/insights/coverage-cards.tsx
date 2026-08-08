@@ -4,6 +4,15 @@ import {
   presentCategoryCount,
   type TierCoverage,
 } from "@/lib/scoring";
+import {
+  coverageGrid,
+  coverageHeader,
+  coverageSection,
+  tierCard,
+  tierCardHeader,
+  tierCardList,
+  tierCardRow,
+} from "@/components/insights/scorecard-shell";
 import { cn } from "@/lib/utils";
 
 /**
@@ -20,8 +29,8 @@ export function CoverageCards({ tiers }: { tiers: TierCoverage[] }) {
   const presentCount = presentCategoryCount(tiers);
 
   return (
-    <section className="mt-18">
-      <header className="mb-5 flex items-baseline justify-between gap-4">
+    <section className={coverageSection}>
+      <header className={coverageHeader}>
         <h2 className="eyebrow text-eyebrow text-muted-foreground">
           Category coverage
         </h2>
@@ -30,7 +39,7 @@ export function CoverageCards({ tiers }: { tiers: TierCoverage[] }) {
         </span>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 wide:grid-cols-3">
+      <div className={coverageGrid}>
         {tiers.map((tier) => (
           <TierCard key={tier.tier} tier={tier} />
         ))}
@@ -41,8 +50,8 @@ export function CoverageCards({ tiers }: { tiers: TierCoverage[] }) {
 
 function TierCard({ tier }: { tier: TierCoverage }) {
   return (
-    <div className="rounded-lg border bg-card p-5">
-      <div className="flex items-baseline justify-between gap-4">
+    <div className={tierCard}>
+      <div className={tierCardHeader}>
         <span className="eyebrow text-eyebrow font-semibold">
           {TIER_LABELS[tier.tier]}
         </span>
@@ -51,14 +60,11 @@ function TierCard({ tier }: { tier: TierCoverage }) {
         </span>
       </div>
 
-      <ul className="mt-4 grid gap-[0.6rem]">
+      <ul className={tierCardList}>
         {tier.categories.map((category) => {
           const absent = "text-muted-foreground opacity-[0.55]";
           return (
-            <li
-              key={category.id}
-              className="flex items-center justify-between gap-4 text-[0.9375rem]"
-            >
+            <li key={category.id} className={tierCardRow}>
               <span className={cn(!category.present && absent)}>
                 {CATEGORY_LABELS[category.id]}
               </span>

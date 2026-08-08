@@ -1,3 +1,21 @@
+import {
+  coverageGrid,
+  coverageHeader,
+  coverageSection,
+  heroDescription,
+  heroGrid,
+  heroHeader,
+  heroHeadline,
+  heroNumeral,
+  heroRule,
+  mapBand,
+  pageShell,
+  tierCard,
+  tierCardHeader,
+  tierCardList,
+  tierCardRow,
+  verdictStrip,
+} from "@/components/insights/scorecard-shell";
 import { cn } from "@/lib/utils";
 
 /**
@@ -41,23 +59,25 @@ const stackedLine = "-my-[3px] bg-clip-content py-[3px]";
  */
 export default function InsightsLoading() {
   return (
-    <main className="mx-auto w-full max-w-[1120px] flex-1 px-6 pb-24">
+    <main className={pageShell}>
       <div role="status" aria-live="polite" className="sr-only">
         Loading insights
       </div>
 
       <div aria-hidden="true">
-        <header className="pt-18 pb-10">
+        <header className={heroHeader}>
           <Block className="eyebrow text-eyebrow">Walkability report</Block>
-          <Block className="display-headline mt-3 max-w-[16ch] text-[clamp(2rem,4.5vw,3.25rem)]">
-            350 5th Avenue
-          </Block>
+          <Block className={heroHeadline}>350 5th Avenue</Block>
 
-          {/* The three columns don't share a description length, and a grid
-              item's height is its own — so each one stands in for the real
-              copy it will be replaced by, down to how many lines that runs to
-              at `max-w-[26ch]`. */}
-          <div className="mt-14 grid grid-cols-1 gap-8 wide:grid-cols-3">
+          {/* The three columns don't share a description length, so each one
+              stands in for the real copy it will be replaced by, down to how
+              many lines that runs to at `max-w-[26ch]`. Above the collapse the
+              row is as tall as the walking column, which is three lines
+              whatever the scores are, so the match there is exact. Below it the
+              columns stack and driving's own height depends on the data — one
+              line, or a `Pill` and a line when a car adds something — which no
+              fixed skeleton can track. */}
+          <div className={heroGrid}>
             <FigureSkeleton lead label="Walking score" lines={3} />
             <FigureSkeleton label="Driving score" lines={1} />
             <FigureSkeleton label="Amenity density" lines={2} />
@@ -66,12 +86,7 @@ export default function InsightsLoading() {
 
         {/* The verdict strip is a `--muted` surface already, so its lines take
             `--border` — the next step down the same neutral ladder. */}
-        <div
-          className={cn(
-            "mt-12 rounded-lg border-l-[3px] border-primary bg-muted px-7 py-6 text-[1.0625rem] leading-[1.55]",
-            stackedLines,
-          )}
-        >
+        <div className={cn(verdictStrip, stackedLines)}>
           <Block className={cn("max-w-full bg-border", stackedLine)}>
             Twelve of twelve categories within a kilometre, which is as complete
             as this score gets.
@@ -81,15 +96,15 @@ export default function InsightsLoading() {
           </Block>
         </div>
 
-        <div className="mt-12 h-[clamp(19rem,40vw,26.25rem)] rounded-lg border bg-muted" />
+        <div className={mapBand} />
 
-        <section className="mt-18">
-          <header className="mb-5 flex items-baseline justify-between gap-4">
+        <section className={coverageSection}>
+          <header className={coverageHeader}>
             <Block className="eyebrow text-eyebrow">Category coverage</Block>
             <Block className="eyebrow text-eyebrow">12 of 12 present</Block>
           </header>
 
-          <div className="grid grid-cols-1 gap-4 wide:grid-cols-3">
+          <div className={coverageGrid}>
             <TierCardSkeleton />
             <TierCardSkeleton />
             <TierCardSkeleton />
@@ -116,16 +131,11 @@ function FigureSkeleton({
 }) {
   return (
     <div
-      className={cn(
-        "border-t-2 pt-4",
-        lead ? "border-primary" : "border-foreground",
-      )}
+      className={cn(heroRule, lead ? "border-primary" : "border-foreground")}
     >
       <Block className="eyebrow text-eyebrow">{label}</Block>
-      <Block className="numeral mt-3 mb-2 text-[clamp(3.5rem,9vw,6.5rem)]">
-        88
-      </Block>
-      <div className={cn("max-w-[26ch] text-sm leading-relaxed", stackedLines)}>
+      <Block className={heroNumeral}>88</Block>
+      <div className={cn(heroDescription, stackedLines)}>
         {Array.from({ length: lines }, (_, line) => (
           <Block key={line} className={cn("max-w-full", stackedLine)}>
             Tier-weighted category coverage
@@ -139,18 +149,15 @@ function FigureSkeleton({
 /** One tier card: its weight row and its four categories. */
 function TierCardSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-5">
-      <div className="flex items-baseline justify-between gap-4">
+    <div className={tierCard}>
+      <div className={tierCardHeader}>
         <Block className="eyebrow text-eyebrow">Daily needs</Block>
         <Block className="eyebrow text-eyebrow">×3</Block>
       </div>
 
-      <div className="mt-4 grid gap-[0.6rem]">
+      <div className={tierCardList}>
         {["Grocery", "Pharmacy", "Café", "Restaurant"].map((category) => (
-          <div
-            key={category}
-            className="flex items-center justify-between gap-4 text-[0.9375rem]"
-          >
+          <div key={category} className={tierCardRow}>
             <Block>{category}</Block>
             <Block className="font-mono text-[0.8125rem]">280 m</Block>
           </div>

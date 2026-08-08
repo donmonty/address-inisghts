@@ -11,12 +11,14 @@ import { INSIGHT_ERROR_DIGEST, insightErrorCopy } from "@/lib/insight-error";
  * the hard-fail state — with no type error and no failing render.
  */
 describe("the errors that reach error.tsx", () => {
+  // The wording itself is `lib/insight-error.test.ts`'s to pin; what these
+  // assert is only that each throw routes to the state it is supposed to.
   it("stamps the hard fail with the digest its copy is keyed on", () => {
     const error = new MissingCategoryError(["cafe"]);
 
     expect(error.digest).toBe(INSIGHT_ERROR_DIGEST.missingCategory);
-    expect(insightErrorCopy(error.digest).heading).toBe(
-      "Couldn’t score this address",
+    expect(insightErrorCopy(error.digest)).toEqual(
+      insightErrorCopy(INSIGHT_ERROR_DIGEST.missingCategory),
     );
   });
 
@@ -24,6 +26,8 @@ describe("the errors that reach error.tsx", () => {
     const error = new RateLimitError();
 
     expect(error.digest).toBe(INSIGHT_ERROR_DIGEST.rateLimited);
-    expect(insightErrorCopy(error.digest).heading).toBe("Too many lookups");
+    expect(insightErrorCopy(error.digest)).toEqual(
+      insightErrorCopy(INSIGHT_ERROR_DIGEST.rateLimited),
+    );
   });
 });

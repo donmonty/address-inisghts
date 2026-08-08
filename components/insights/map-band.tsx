@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { useNearby } from "@/components/insights/nearby-provider";
+import { mapBand } from "@/components/insights/scorecard-shell";
 import { useSelection } from "@/components/insights/selection-provider";
 import type { Point } from "@/lib/amenities";
 import {
@@ -65,8 +66,12 @@ const PAN_MS = 400;
 
 /**
  * `loading` is the muted band before `load` fires; `unavailable` is the band
- * that has given up and says so. There is no going back from `unavailable`
- * within one mount — a map that never drew is not going to start.
+ * that has given up and says so.
+ *
+ * `ready` wins over `unavailable`, not the other way round: an `error` for one
+ * failed tile followed by a successful `load` is a map that works, and a
+ * working map beats a notice about one that doesn't. The reverse — an error
+ * after `load` — is refused at the handler, so a drawn map is never taken away.
  */
 type MapStatus = "loading" | "ready" | "unavailable";
 
@@ -249,12 +254,11 @@ export function MapBand({ address }: { address: Point }) {
     });
   }, [view.amenities, loaded, lat, lng]);
 
-  // 40vw so the band reaches its 420px ceiling at the 1120px page width and
-  // sits at ~360px where the grids collapse, rather than topping out short of
-  // the height the design asks for.
+  // The band's own dimensions live in `scorecard-shell.ts`, because the loading
+  // skeleton has to reserve exactly this height.
   return (
     <div
-      className="relative mt-12 h-[clamp(19rem,40vw,26.25rem)] overflow-hidden rounded-lg border bg-muted"
+      className={cn("relative", mapBand)}
       role="region"
       aria-label="Map of the nearby places"
     >
