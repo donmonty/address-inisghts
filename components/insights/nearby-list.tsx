@@ -2,6 +2,7 @@
 
 import { useNearby } from "@/components/insights/nearby-provider";
 import { pillShape } from "@/components/insights/pill";
+import { useSelection } from "@/components/insights/selection-provider";
 import { Button } from "@/components/ui/button";
 import { CATEGORY_LABELS, formatDistance } from "@/lib/format";
 import type { Amenity } from "@/lib/scoring";
@@ -30,6 +31,7 @@ import { cn } from "@/lib/utils";
  */
 export function NearbyList() {
   const { view, setRadius, setFilter } = useNearby();
+  const { selected, select, hover } = useSelection();
   const { expander } = view;
 
   return (
@@ -62,7 +64,13 @@ export function NearbyList() {
       {view.amenities.length > 0 && (
         <ul className="mt-7 grid grid-cols-1 gap-x-10 wide:grid-cols-2">
           {view.amenities.map((amenity) => (
-            <Row key={amenity.id} amenity={amenity} />
+            <Row
+              key={amenity.id}
+              amenity={amenity}
+              selected={selected?.id === amenity.id}
+              onSelect={() => select(amenity)}
+              onHover={hover}
+            />
           ))}
         </ul>
       )}
@@ -91,19 +99,48 @@ export function NearbyList() {
 /**
  * One place. The name can wrap; the category and distance are one mono unit on
  * the right and must not, so the right-hand edge of the column stays a column.
+ *
+ * The whole row is the button that opens the drawer — a row-sized target, and
+ * one focus stop per place rather than three. Pointing at it highlights the
+ * matching pin, which is what ties the two panels together on a desktop; on a
+ * touch screen the enter never fires and the tap goes straight to the drawer.
  */
-function Row({ amenity }: { amenity: Amenity }) {
+function Row({
+  amenity,
+  selected,
+  onSelect,
+  onHover,
+}: {
+  amenity: Amenity;
+  selected: boolean;
+  onSelect: () => void;
+  onHover: (id: string | null) => void;
+}) {
   return (
-    <li className="flex items-baseline justify-between gap-4 border-b py-[0.7rem] text-[0.9375rem]">
-      <span className="min-w-0">{amenity.name}</span>
-      <span className="flex shrink-0 items-baseline gap-3 font-mono text-[0.8125rem]">
-        <span className="text-muted-foreground">
-          {CATEGORY_LABELS[amenity.category]}
+    <li className="border-b">
+      <button
+        type="button"
+        aria-current={selected}
+        onClick={onSelect}
+        onPointerEnter={(event) =>
+          event.pointerType === "mouse" && onHover(amenity.id)
+        }
+        onPointerLeave={() => onHover(null)}
+        className={cn(
+          "flex w-full cursor-pointer items-baseline justify-between gap-4 rounded-sm py-[0.7rem] text-left text-[0.9375rem] transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+          selected && "font-medium",
+        )}
+      >
+        <span className="min-w-0">{amenity.name}</span>
+        <span className="flex shrink-0 items-baseline gap-3 font-mono text-[0.8125rem]">
+          <span className="text-muted-foreground">
+            {CATEGORY_LABELS[amenity.category]}
+          </span>
+          <span className="w-[4.5ch] text-right tabular-nums">
+            {formatDistance(amenity.distanceMeters)}
+          </span>
         </span>
-        <span className="w-[4.5ch] text-right tabular-nums">
-          {formatDistance(amenity.distanceMeters)}
-        </span>
-      </span>
+      </button>
     </li>
   );
 }

@@ -96,3 +96,122 @@ export function mapBounds(
     [Math.max(...lngs), Math.max(...lats)],
   ];
 }
+
+/** A box in viewport pixels — the band's own `getBoundingClientRect`. */
+export interface BandRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+/** The open drawer, as the edge of the viewport it covers. */
+export interface DrawerCover {
+  side: "right" | "bottom";
+  /** Its width on the right, its height at the bottom. */
+  size: number;
+}
+
+/**
+ * The place drawer's geometry, which the map needs as much as the drawer does:
+ * one is a sheet the reader opens, the other is the slice of the band that pin
+ * has just disappeared behind. Two copies of 420px is a rule two files could
+ * disagree about, so both read these.
+ */
+export const DRAWER = {
+  /** The one point the whole page collapses at — `--breakpoint-wide`. */
+  wideBreakpoint: 901,
+  /** Wide enough for an address line, narrow enough to leave the map readable. */
+  width: 420,
+  /** The bottom sheet's share of the viewport, leaving the band above it. */
+  bottomShare: 0.7,
+} as const;
+
+/** Which edge the drawer takes at this viewport, and how much of it it covers. */
+export function drawerCover(viewport: {
+  width: number;
+  height: number;
+}): DrawerCover {
+  if (viewport.width >= DRAWER.wideBreakpoint) {
+    return { side: "right", size: DRAWER.width };
+  }
+  return { side: "bottom", size: viewport.height * DRAWER.bottomShare };
+}
+
+/**
+ * Room for a selected pin — 1.3x the normal mark — and a little air, so a pin
+ * counts as visible only when it is actually readable rather than clipped by
+ * the drawer's edge.
+ */
+const PIN_MARGIN = 48;
+
+/**
+ * Where the selected pin should sit, relative to the band's centre — or `null`
+ * when it is already in plain sight and the camera must not move.
+ *
+ * Selecting never flies anywhere: the reader picked that pin off a map they
+ * were already reading, and re-centring on every click would keep pulling the
+ * neighbourhood out from under them. The camera moves only when the pin can't
+ * be seen — scrolled off the band, or behind the drawer that has just opened
+ * over it — and then only on the axis that is actually blocked, so a pin hidden
+ * by the right-hand drawer slides left and stays at its own height.
+ *
+ * The result is GL JS's `easeTo` / `panTo` `offset`: the target's screen
+ * position measured from the container's centre. Passing the pin's current
+ * position on a free axis is what keeps that axis still.
+ */
+export function panOffset({
+  pin,
+  band,
+  viewport,
+  drawer,
+}: {
+  /** The pin's position in band pixels, from `map.project`. */
+  pin: { x: number; y: number };
+  band: BandRect;
+  viewport: { width: number; height: number };
+  drawer: DrawerCover;
+}): [number, number] | null {
+  const uncovered = {
+    width: drawer.side === "right" ? viewport.width - drawer.size : viewport.width,
+    height:
+      drawer.side === "bottom" ? viewport.height - drawer.size : viewport.height,
+  };
+
+  const x = axis(pin.x, band.left, band.width, uncovered.width);
+  const y = axis(pin.y, band.top, band.height, uncovered.height);
+
+  // Nothing of the band is on screen: there is no position to pan the pin to
+  // that would show it, so the camera stays where the reader left it.
+  if (!x || !y) return null;
+  if (x.visible && y.visible) return null;
+
+  return [x.target - band.width / 2, y.target - band.height / 2];
+}
+
+/**
+ * One axis of the decision: the slice of the band that is both on screen and
+ * clear of the drawer, and whether the pin is inside it.
+ *
+ * A slice too thin to hold the margins is still visible band — a 40px strip
+ * above a bottom sheet is where the pin has to go — so the margins are dropped
+ * there rather than the rule giving up: a pin already inside that strip is in
+ * sight and must not be moved, and one outside it is aimed at its middle.
+ */
+function axis(
+  at: number,
+  offset: number,
+  length: number,
+  uncovered: number,
+): { target: number; visible: boolean } | null {
+  const start = Math.max(0, -offset);
+  const end = Math.min(length, uncovered - offset);
+  if (end <= start) return null;
+
+  const roomy = end - start > 2 * PIN_MARGIN;
+  const from = roomy ? start + PIN_MARGIN : start;
+  const to = roomy ? end - PIN_MARGIN : end;
+
+  const visible = at >= from && at <= to;
+  return { target: visible ? at : (from + to) / 2, visible };
+}

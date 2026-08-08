@@ -156,7 +156,18 @@
   fill: var(--card);
 }
 
+/* The pin is a button and the circle inside it is a span, because GL JS drives
+   the marker element's own `transform` to position it — a `scale()` on the
+   outer element would move the pin off its coordinates. Everything visual, and
+   every state below, therefore hangs off the inner body. */
 .amenity-pin {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.amenity-pin-body {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,7 +176,47 @@
   border: 1px solid var(--border);
   border-radius: 9999px;
   background: var(--card);
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
 }
 .amenity-pin svg {
   fill: var(--foreground);
+}
+.amenity-pin:focus-visible {
+  outline: none;
+}
+.amenity-pin:focus-visible .amenity-pin-body {
+  outline: 3px solid color-mix(in oklch, var(--ring), transparent 50%);
+  outline-offset: 2px;
+}
+
+/* Selection is the one thing on this map colour is spent on: the open place is
+   filled with --primary and grown by a third, so it reads at a glance among two
+   dozen neutral circles. It also lifts above them — but stays under the
+   address's z-index 2, which must never be occluded. */
+.amenity-pin.is-selected {
+  z-index: 1;
+}
+.amenity-pin.is-selected .amenity-pin-body {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.3);
+}
+.amenity-pin.is-selected svg {
+  fill: var(--primary-foreground);
+}
+
+/* Hovering a list row firms its pin's edge — never its fill, which would say
+   "selected". Pointer devices only: on a touch screen the class would be left
+   behind by a tap that has already opened the drawer. */
+@media (hover: hover) and (pointer: fine) {
+  .amenity-pin.is-hovered:not(.is-selected) {
+    z-index: 1;
+  }
+  .amenity-pin.is-hovered:not(.is-selected) .amenity-pin-body {
+    border-color: var(--foreground);
+    transform: scale(1.15);
+  }
 }
