@@ -38,6 +38,13 @@
   /* Editorial type scale: sans headlines tighten, uppercase mono opens up. */
   --tracking-headline: -0.02em;
   --tracking-eyebrow: 0.06em;
+  /* Eyebrows are always set at this size — `text-eyebrow` rather than the
+     same arbitrary value repeated at every use site. */
+  --text-eyebrow: 0.6875rem;
+  /* The one point at which every grid on the page collapses to a single
+     column. 901px rather than 900px because the layout is specified as
+     single-column *at* 900px, and Tailwind's `min-*` variants are inclusive. */
+  --breakpoint-wide: 901px;
 }
 
 /* Light. Orange is --primary and --ring only, never a surface. */
@@ -100,7 +107,7 @@
   }
 }
 
-/* The two type treatments the whole design system leans on. */
+/* The type treatments the whole design system leans on. */
 @utility eyebrow {
   font-family: var(--font-mono);
   text-transform: uppercase;
@@ -111,4 +118,23 @@
   font-family: var(--font-sans);
   font-weight: 800;
   letter-spacing: var(--tracking-headline);
+}
+
+/* The scorecard's address headline. Tracks tighter than `headline` because it
+   runs to 3.25rem, where -0.02em reads loose. */
+@utility display-headline {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+/* The three oversized hero numerals. Tabular so the columns align on their
+   digits, and tracked tighter still — these run to 6.5rem. */
+@utility numeral {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.85;
 }

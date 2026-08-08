@@ -1,6 +1,9 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
+import { CoverageCards } from "@/components/insights/coverage-cards";
+import { ScoreHero } from "@/components/insights/score-hero";
+import { VerdictStrip } from "@/components/insights/verdict-strip";
 import { getAddressInsight, type Point } from "@/lib/amenities";
 
 /**
@@ -10,10 +13,10 @@ import { getAddressInsight, type Point } from "@/lib/amenities";
  * no absolute-URL construction per environment. Coordinates are the identity;
  * `q` is cosmetic and only ever displayed.
  *
- * The presentation here is deliberately plain: this route exists to prove the
- * pipeline is correct end to end against the live API. The editorial scorecard
- * — and the `error.tsx` / `loading.tsx` treatment of the throws behind it —
- * land in the following tickets.
+ * The editorial scorecard runs top to bottom: hero, verdict strip, category
+ * coverage. The map band and the amenity list slot in below `CoverageCards` in
+ * the following tickets, as does the `error.tsx` / `loading.tsx` treatment of
+ * the throws behind `getAddressInsight`.
  */
 export default async function InsightsPage({
   params,
@@ -29,36 +32,11 @@ export default async function InsightsPage({
   const insight = await getAddressInsight({ ...point, ip: await clientIp() });
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-16">
-      <div className="flex flex-col gap-2">
-        <p className="eyebrow text-xs text-muted-foreground">
-          {point.lat}, {point.lng}
-        </p>
-        <h1 className="headline text-4xl text-balance">{label}</h1>
-      </div>
-
-      <dl className="grid grid-cols-2 gap-6 sm:grid-cols-3">
-        <Score label="Walking" value={insight.walk} />
-        <Score label="Driving" value={insight.drive} />
-        <Score
-          label="With a car"
-          value={insight.delta > 0 ? `+${insight.delta}` : insight.delta}
-        />
-        <Score label="Amenity density" value={insight.densityIndex} />
-        <Score label="Band" value={insight.densityBand} />
-      </dl>
-
-      <p className="text-sm text-muted-foreground">{insight.verdict}</p>
+    <main className="mx-auto w-full max-w-[1120px] flex-1 px-6 pb-24">
+      <ScoreHero label={label} insight={insight} />
+      <VerdictStrip verdict={insight.verdict} />
+      <CoverageCards tiers={insight.tiers} />
     </main>
-  );
-}
-
-function Score({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="flex flex-col gap-1 border-t pt-3">
-      <dt className="eyebrow text-xs text-muted-foreground">{label}</dt>
-      <dd className="headline text-3xl">{value}</dd>
-    </div>
   );
 }
 

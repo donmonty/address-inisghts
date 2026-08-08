@@ -113,6 +113,18 @@ export interface AddressInsight {
   amenities5km: Amenity[];
 }
 
+/**
+ * How many of the twelve categories are present within the walking radius.
+ *
+ * The one derivation the scorecard shares with the verdict sentence, so both
+ * read the same number off the same rule rather than each flattening `tiers`
+ * for themselves.
+ */
+export function presentCategoryCount(tiers: TierCoverage[]): number {
+  return tiers.flatMap((tier) => tier.categories).filter((c) => c.present)
+    .length;
+}
+
 export function scoreAddress(rawByCategory: RawByCategory): AddressInsight {
   const amenities5km = collect(rawByCategory, DRIVE_RADIUS_M);
   const amenities1km = amenities5km.filter(
@@ -283,8 +295,7 @@ function verdictFor({
   delta: number;
   categoriesWithin5km: number;
 }): string {
-  const categories = tiers.flatMap((tier) => tier.categories);
-  const presentCount = categories.filter((c) => c.present).length;
+  const presentCount = presentCategoryCount(tiers);
   const missingEssentials = (
     tiers.find((tier) => tier.tier === "essential")?.categories ?? []
   )
