@@ -17,7 +17,7 @@
  * so a store that misbehaves reads as "no history" and writes as a no-op.
  */
 
-import type { ResolvedAddress } from "@/lib/search";
+import { addressKey, type ResolvedAddress } from "@/lib/search";
 
 export const RECENT_KEY = "address-insights.recent";
 
@@ -52,15 +52,16 @@ export function readRecent(storage: RecentStorage): RecentLookup[] {
  *
  * Identity is the point, not the label: the same front door reached through two
  * differently-worded suggestions is one entry, carrying the label it was most
- * recently found under. That matches the insights page, where coordinates are
- * the address and `q` is cosmetic.
+ * recently found under. It is `addressKey` doing the deciding, so two lookups
+ * that would open the same insights page are one entry here too.
  */
 export function rememberRecent(
   storage: RecentStorage,
   address: ResolvedAddress,
 ): RecentLookup[] {
+  const key = addressKey(address);
   const existing = readRecent(storage).filter(
-    (entry) => pointKey(entry) !== pointKey(address),
+    (entry) => addressKey(entry) !== key,
   );
   const next = [address, ...existing].slice(0, RECENT_LIMIT);
 
@@ -72,10 +73,6 @@ export function rememberRecent(
   }
 
   return next;
-}
-
-function pointKey({ lat, lng }: ResolvedAddress): string {
-  return `${lat},${lng}`;
 }
 
 function isLookup(value: unknown): value is RecentLookup {

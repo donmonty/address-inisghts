@@ -14,13 +14,18 @@
  * first months from now.
  */
 
+import type { DensityBand } from "@/lib/scoring";
 import type { ResolvedAddress } from "@/lib/search";
 
 export interface ExampleAddress extends ResolvedAddress {
   /** The place, as a person would name it. */
   name: string;
-  /** Its measured density band — the reason it is one of the four. */
-  band: string;
+  /**
+   * Its measured density band — the reason it is one of the four. Typed as the
+   * scorecard's own `DensityBand` so the claim is checked rather than asserted:
+   * a band the insights page could never print would not compile here.
+   */
+  band: DensityBand;
 }
 
 export const EXAMPLE_ADDRESSES: readonly ExampleAddress[] = [

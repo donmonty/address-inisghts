@@ -7,8 +7,8 @@ import {
   getRecentServerSnapshot,
   getRecentSnapshot,
   subscribeRecent,
-} from "@/components/search/recent-store";
-import { insightsHref } from "@/lib/search";
+} from "@/lib/recent-store";
+import { addressKey, insightsHref } from "@/lib/search";
 
 /**
  * The addresses this browser has scored before, newest first.
@@ -41,7 +41,7 @@ export function RecentLookups() {
       </h2>
       <ul>
         {lookups.map((lookup) => (
-          <li key={`${lookup.lat},${lookup.lng}`} className="border-b">
+          <li key={addressKey(lookup)} className="border-b">
             <Link
               href={insightsHref(lookup)}
               className="block rounded-sm py-[0.7rem] text-[0.9375rem] outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"

@@ -158,7 +158,6 @@ function toSuggestion(raw: RawSuggestion): AddressSuggestion | null {
 export interface RetrieveRequest {
   suggestion: AddressSuggestion;
   sessionToken: string;
-  signal?: AbortSignal;
 }
 
 /**
@@ -168,14 +167,13 @@ export interface RetrieveRequest {
 export async function retrieveAddress({
   suggestion,
   sessionToken,
-  signal,
 }: RetrieveRequest): Promise<ResolvedAddress> {
   const url = new URL(`${RETRIEVE_ENDPOINT}/${suggestion.mapboxId}`);
   url.searchParams.set("session_token", sessionToken);
   url.searchParams.set("access_token", browserToken());
   url.searchParams.set("language", "en");
 
-  const body = await request(url, signal, "retrieve");
+  const body = await request(url, undefined, "retrieve");
   const feature = (body as { features?: RetrievedFeature[] }).features?.[0];
   const coordinates = feature?.geometry?.coordinates;
 
@@ -203,10 +201,20 @@ interface RetrievedFeature {
   properties?: { full_address?: unknown };
 }
 
+/**
+ * The rounded `lat,lng` — one address's identity, everywhere it needs one.
+ *
+ * The URL, the recent-lookups list and React's keys all key on the same string
+ * so they cannot disagree: two suggestions that resolve to the same rounded
+ * point are the same address in the history and the same page to visit.
+ */
+export function addressKey({ lat, lng }: ResolvedAddress): string {
+  return `${round(lat)},${round(lng)}`;
+}
+
 /** `/insights/[lat],[lng]?q=<label>`. The label is cosmetic; the point isn't. */
-export function insightsHref({ lat, lng, label }: ResolvedAddress): string {
-  const coords = `${round(lat)},${round(lng)}`;
-  return `/insights/${coords}?q=${encodeURIComponent(label)}`;
+export function insightsHref(address: ResolvedAddress): string {
+  return `/insights/${addressKey(address)}?q=${encodeURIComponent(address.label)}`;
 }
 
 function round(value: number): number {
