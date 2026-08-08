@@ -308,6 +308,15 @@ npm run dev
 Never put an `sk.` token in either. Anything in a `NEXT_PUBLIC_` variable is inlined into the client
 bundle and is public by definition.
 
+**On Vercel the two variables cover different environments, on purpose.**
+`NEXT_PUBLIC_MAPBOX_TOKEN` is set in Production, Preview and Development. `MAPBOX_SERVER_TOKEN` is
+set in **Production and Preview only**, because it is marked a *sensitive* variable and Vercel does
+not allow sensitive variables to target Development — a Development value has to be decryptable for
+`vercel env pull` to write it to disk, which is exactly the property the sensitivity flag removes.
+Unmarking it to fill the third box would trade the token's write-only guarantee for a tidier
+dashboard. Nothing depends on it: local development reads `.env.local`, filled in by hand from the
+step above, so a `vercel env pull` that omits the server token is expected rather than broken.
+
 ```bash
 npm run build     # production build
 npm start         # serve it
