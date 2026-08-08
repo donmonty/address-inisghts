@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MAKI_GLYPHS, MAP_STYLES, mapBounds } from "@/lib/map";
+import { MAKI_GLYPHS, MAP_STYLES, mapBounds, panOffset } from "@/lib/map";
 import { CATEGORY_IDS, type Amenity, type CategoryId } from "@/lib/scoring";
 
 /*
@@ -74,5 +74,77 @@ describe("the viewport", () => {
       [0, 0],
       [0.005, 0],
     ]);
+  });
+});
+
+/*
+ * Selecting a place never flies the map anywhere: the reader chose that pin off
+ * a map they were already reading, and moving it under them loses the context
+ * they used to choose. The camera moves only when the pin they picked can't be
+ * seen — off the band, or behind the drawer that just opened over it.
+ */
+describe("the pan on selection", () => {
+  /** A 900x360 band sitting 200px down a 1400x900 desktop viewport. */
+  const band = { top: 200, left: 100, width: 900, height: 360 };
+  const desktop = {
+    viewport: { width: 1400, height: 900 },
+    drawer: { side: "right", size: 420 } as const,
+  };
+  /** The same band on a phone, under a sheet taking 70vh. */
+  const phone = {
+    viewport: { width: 420, height: 800 },
+    drawer: { side: "bottom", size: 560 } as const,
+  };
+
+  /**
+   * The offset is where the pin is asked to sit relative to the band's centre,
+   * so the pin's resulting position in the band is the thing worth asserting.
+   */
+  const landsAt = (offset: [number, number]) => ({
+    x: band.width / 2 + offset[0],
+    y: band.height / 2 + offset[1],
+  });
+
+  it("stays put when the pin is in plain sight", () => {
+    expect(panOffset({ pin: { x: 300, y: 180 }, band, ...desktop })).toBeNull();
+  });
+
+  it("moves a pin out from behind the right-hand drawer", () => {
+    const offset = panOffset({ pin: { x: 850, y: 180 }, band, ...desktop });
+
+    expect(offset).not.toBeNull();
+    // 1400 - 420 leaves the drawer's edge at 980, which is band x 880.
+    expect(landsAt(offset!).x).toBeLessThan(880);
+  });
+
+  it("moves it no further than it has to, leaving the free axis alone", () => {
+    const offset = panOffset({ pin: { x: 850, y: 260 }, band, ...desktop });
+
+    expect(landsAt(offset!).y).toBe(260);
+  });
+
+  it("moves a pin up from behind the bottom sheet", () => {
+    const offset = panOffset({ pin: { x: 200, y: 300 }, band, ...phone });
+
+    expect(offset).not.toBeNull();
+    // The sheet's top edge is 240px down the viewport, which is band y 40.
+    expect(landsAt(offset!).y).toBeLessThan(40);
+  });
+
+  it("brings back a pin that has scrolled off the band", () => {
+    const offset = panOffset({ pin: { x: 400, y: -60 }, band, ...desktop });
+
+    expect(offset).not.toBeNull();
+    expect(landsAt(offset!).y).toBeGreaterThan(0);
+  });
+
+  it("leaves the camera alone when nothing of the band is visible", () => {
+    expect(
+      panOffset({
+        pin: { x: 300, y: 180 },
+        band: { top: 900, left: 100, width: 900, height: 360 },
+        ...desktop,
+      }),
+    ).toBeNull();
   });
 });

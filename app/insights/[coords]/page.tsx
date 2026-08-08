@@ -5,7 +5,9 @@ import { CoverageCards } from "@/components/insights/coverage-cards";
 import { MapBand } from "@/components/insights/map-band";
 import { NearbyList } from "@/components/insights/nearby-list";
 import { NearbyProvider } from "@/components/insights/nearby-provider";
+import { PlaceDrawer } from "@/components/insights/place-drawer";
 import { ScoreHero } from "@/components/insights/score-hero";
+import { SelectionProvider } from "@/components/insights/selection-provider";
 import { VerdictStrip } from "@/components/insights/verdict-strip";
 import { getAddressInsight, type Point } from "@/lib/amenities";
 
@@ -26,6 +28,10 @@ import { getAddressInsight, type Point } from "@/lib/amenities";
  * receives the whole insight because both radii are already in it — the 5 km
  * expander is a state change, never a request. `CoverageCards` sits between the
  * two and stays a Server Component by being passed through as `children`.
+ *
+ * `SelectionProvider` holds the open place, and holds it in React state only —
+ * selection never enters the URL, so a shared link lands the recipient on the
+ * address rather than on a `mapbox_id` that may no longer resolve.
  */
 export default async function InsightsPage({
   params,
@@ -45,9 +51,12 @@ export default async function InsightsPage({
       <ScoreHero label={label} insight={insight} />
       <VerdictStrip verdict={insight.verdict} />
       <NearbyProvider insight={insight}>
-        <MapBand address={point} />
-        <CoverageCards tiers={insight.tiers} />
-        <NearbyList />
+        <SelectionProvider>
+          <MapBand address={point} />
+          <CoverageCards tiers={insight.tiers} />
+          <NearbyList />
+          <PlaceDrawer />
+        </SelectionProvider>
       </NearbyProvider>
     </main>
   );

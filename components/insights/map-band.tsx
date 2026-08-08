@@ -6,8 +6,10 @@ import { useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { useNearby } from "@/components/insights/nearby-provider";
+import { drawerCover } from "@/components/insights/place-drawer";
+import { useSelection } from "@/components/insights/selection-provider";
 import type { Point } from "@/lib/amenities";
-import { MAKI_GLYPHS, MAP_STYLES, mapBounds } from "@/lib/map";
+import { MAKI_GLYPHS, MAP_STYLES, mapBounds, panOffset } from "@/lib/map";
 import type { Amenity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,10 @@ import { cn } from "@/lib/utils";
  * pins only cafés and expanding to 5 km pins the 5 km set. The chips become a
  * map control for free, which is what keeps the default view at ~24 markers
  * rather than ~300.
+ *
+ * Clicking a pin opens the place drawer and marks that pin selected; the map
+ * never flies anywhere on selection, and pans only when the pin it just marked
+ * would sit behind the drawer or off the band.
  *
  * Nothing else on the page waits on this component. The band holds its
  * `--muted` fill until GL JS fires `load`, and if the token is missing or the
@@ -42,13 +48,24 @@ const INITIAL_ZOOM = 14;
 const MAX_FIT_ZOOM = 16;
 /** Room for the pin bodies, which extend above and left of their anchor. */
 const FIT_PADDING = 56;
+/** Long enough to read as the same map moving, short enough not to be waited on. */
+const PAN_MS = 400;
 
 export function MapBand({ address }: { address: Point }) {
   const { view } = useNearby();
+  const { selected, hovered, select } = useSelection();
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const pins = useRef(new Map<string, mapboxgl.Marker>());
   const [loaded, setLoaded] = useState(false);
+
+  // The pins are built once each and outlive every selection, so the click
+  // handler reads the current `select` off a ref rather than being a reason to
+  // tear two hundred markers down and rebuild them.
+  const selectRef = useRef(select);
+  useEffect(() => {
+    selectRef.current = select;
+  }, [select]);
 
   const { lat, lng } = address;
 
@@ -115,12 +132,57 @@ export function MapBand({ address }: { address: Point }) {
       if (pins.current.has(amenity.id)) continue;
       pins.current.set(
         amenity.id,
-        new mapboxgl.Marker({ element: amenityPin(amenity) })
+        new mapboxgl.Marker({
+          element: amenityPin(amenity, () => selectRef.current(amenity)),
+        })
           .setLngLat(amenity.coordinates)
           .addTo(instance),
       );
     }
   }, [view.amenities, loaded]);
+
+  // Selection and hover are classes on markers that already exist, never a
+  // rebuild: the selected pin takes the orange fill and grows, the hovered one
+  // only firms up its edge. Colour marks selection on this map and nothing
+  // else, which is what keeps it readable without a legend.
+  useEffect(() => {
+    for (const [id, pin] of pins.current) {
+      const element = pin.getElement();
+      element.classList.toggle("is-selected", id === selected?.id);
+      element.classList.toggle("is-hovered", id === hovered);
+    }
+  }, [selected, hovered, view.amenities]);
+
+  // No `flyTo`, ever. The reader picked that pin off a map they were already
+  // reading; re-centring on every click would pull the neighbourhood out from
+  // under them. The camera moves only when the pin they picked can't be seen —
+  // behind the drawer that just opened, or off the band — and `lib/map.ts`
+  // decides which, so the rule is testable without a WebGL context.
+  useEffect(() => {
+    const instance = map.current;
+    const node = container.current;
+    if (!instance || !loaded || !selected || !node) return;
+
+    const band = node.getBoundingClientRect();
+    const pin = instance.project(selected.coordinates);
+
+    const offset = panOffset({
+      pin: { x: pin.x, y: pin.y },
+      band,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      drawer: drawerCover({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      }),
+    });
+    if (!offset) return;
+
+    instance.easeTo({
+      center: selected.coordinates,
+      offset,
+      duration: PAN_MS,
+    });
+  }, [selected, loaded]);
 
   // Refit whenever the pinned set changes, so expanding to 5 km zooms out and
   // filtering to one category zooms in on it. The address is always inside the
@@ -167,7 +229,7 @@ export function MapBand({ address }: { address: Point }) {
 
 /**
  * The searched address: a larger orange teardrop. Shape is what separates "you"
- * from "nearby" — colour is reserved for selection, which arrives with #17.
+ * from "nearby" — colour is reserved for the selected pin and nothing else.
  */
 function addressPin(): HTMLElement {
   const element = document.createElement("div");
@@ -184,13 +246,23 @@ function addressPin(): HTMLElement {
  * One amenity: a small `--card`-filled, `--border`-stroked circle carrying the
  * category's `maki` glyph in `--foreground`. No tier or category colour, so a
  * twelve-colour legend never has to exist.
+ *
+ * A real `<button>` rather than a div with a listener: the pins are the map's
+ * only controls, and a marker you can reach with a keyboard and a label a
+ * screen reader can read costs nothing here.
  */
-function amenityPin(amenity: Amenity): HTMLElement {
-  const element = document.createElement("div");
+function amenityPin(amenity: Amenity, onSelect: () => void): HTMLElement {
+  const element = document.createElement("button");
+  element.type = "button";
   element.className = "amenity-pin";
+  element.title = amenity.name;
+  element.setAttribute("aria-label", amenity.name);
   element.innerHTML = `
-    <svg viewBox="0 0 15 15" width="15" height="15" aria-hidden="true">
-      <path d="${MAKI_GLYPHS[amenity.category]}"/>
-    </svg>`;
+    <span class="amenity-pin-body">
+      <svg viewBox="0 0 15 15" width="15" height="15" aria-hidden="true">
+        <path d="${MAKI_GLYPHS[amenity.category]}"/>
+      </svg>
+    </span>`;
+  element.addEventListener("click", onSelect);
   return element;
 }

@@ -82,6 +82,98 @@ export const MAKI_GLYPHS: Record<CategoryId, string> = {
  * The address is always inside, so a filter whose results all sit on one side
  * of it never pans the reader's own front door off the band.
  */
+/** A box in viewport pixels — the band's own `getBoundingClientRect`. */
+export interface BandRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+/** The open drawer, as the edge of the viewport it covers. */
+export interface DrawerCover {
+  side: "right" | "bottom";
+  /** Its width on the right, its height at the bottom. */
+  size: number;
+}
+
+/**
+ * Room for a selected pin — 1.3x the normal mark — and a little air, so a pin
+ * counts as visible only when it is actually readable rather than clipped by
+ * the drawer's edge.
+ */
+const PIN_MARGIN = 48;
+
+/**
+ * Where the selected pin should sit, relative to the band's centre — or `null`
+ * when it is already in plain sight and the camera must not move.
+ *
+ * Selecting never flies anywhere: the reader picked that pin off a map they
+ * were already reading, and re-centring on every click would keep pulling the
+ * neighbourhood out from under them. The camera moves only when the pin can't
+ * be seen — scrolled off the band, or behind the drawer that has just opened
+ * over it — and then only on the axis that is actually blocked, so a pin hidden
+ * by the right-hand drawer slides left and stays at its own height.
+ *
+ * The result is GL JS's `easeTo` / `panTo` `offset`: the target's screen
+ * position measured from the container's centre. Passing the pin's current
+ * position on a free axis is what keeps that axis still.
+ */
+export function panOffset({
+  pin,
+  band,
+  viewport,
+  drawer,
+}: {
+  /** The pin's position in band pixels, from `map.project`. */
+  pin: { x: number; y: number };
+  band: BandRect;
+  viewport: { width: number; height: number };
+  drawer: DrawerCover;
+}): [number, number] | null {
+  const uncovered = {
+    width: drawer.side === "right" ? viewport.width - drawer.size : viewport.width,
+    height:
+      drawer.side === "bottom" ? viewport.height - drawer.size : viewport.height,
+  };
+
+  const x = axis(pin.x, band.left, band.width, uncovered.width);
+  const y = axis(pin.y, band.top, band.height, uncovered.height);
+
+  // Nothing of the band is on screen: there is no position to pan the pin to
+  // that would show it, so the camera stays where the reader left it.
+  if (!x || !y) return null;
+  if (x.visible && y.visible) return null;
+
+  return [x.target - band.width / 2, y.target - band.height / 2];
+}
+
+/**
+ * One axis of the decision: the slice of the band that is both on screen and
+ * clear of the drawer, and whether the pin is inside it.
+ *
+ * A slice too thin to hold the margins still counts as visible band — a 40px
+ * strip above a bottom sheet is where the pin has to go — so the target
+ * collapses to its middle rather than the rule giving up.
+ */
+function axis(
+  at: number,
+  offset: number,
+  length: number,
+  uncovered: number,
+): { target: number; visible: boolean } | null {
+  const start = Math.max(0, -offset);
+  const end = Math.min(length, uncovered - offset);
+  if (end <= start) return null;
+
+  const from = start + PIN_MARGIN;
+  const to = end - PIN_MARGIN;
+  if (to <= from) return { target: (start + end) / 2, visible: false };
+
+  const visible = at >= from && at <= to;
+  return { target: visible ? at : (from + to) / 2, visible };
+}
+
 export function mapBounds(
   address: Point,
   amenities: Amenity[],
