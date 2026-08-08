@@ -1,7 +1,15 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The scorecard's one badge shape: mono, uppercase, fully rounded.
+ * The scorecard's one badge shape: mono, uppercase, fully rounded. Exported on
+ * its own so the nearby list's filter chips — which must be `<button>`s — are
+ * the same lozenge without a second definition of it.
+ */
+export const pillShape =
+  "eyebrow inline-flex items-center gap-[0.4em] rounded-full border px-[0.7rem] py-[0.3rem] text-eyebrow whitespace-nowrap";
+
+/**
+ * The badge itself.
  *
  * `tone="primary"` marks the `+N with a car` delta. It draws the orange in the
  * border and the text, never as a fill: orange is `--primary` and `--ring`
@@ -20,7 +28,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        "eyebrow inline-flex items-center gap-[0.4em] rounded-full border px-[0.7rem] py-[0.3rem] text-eyebrow whitespace-nowrap",
+        pillShape,
         tone === "primary" && "border-primary font-semibold text-primary",
         className,
       )}
