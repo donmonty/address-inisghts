@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 /**
  * The origin the page metadata is resolved against.
  *
@@ -21,18 +23,51 @@ export const SITE_TAGLINE =
 export const OG_IMAGE_ALT =
   "Address Insights — walking, driving and amenity density scores for any address";
 
-/**
- * The one social card, as a metadata descriptor.
- *
- * The root layout picks the image up from the `app/opengraph-image.tsx` file
- * convention automatically. Any route that declares its own `openGraph` block
- * replaces the parent's wholesale — the inherited image included — so those
- * routes name it here instead. Same static PNG either way: there is no
- * per-address render.
- */
-export const OG_IMAGE = {
+/** The one social card, as a metadata descriptor. */
+const OG_IMAGE = {
   url: "/opengraph-image",
   width: 1200,
   height: 630,
   alt: OG_IMAGE_ALT,
 } as const;
+
+/**
+ * The Open Graph and Twitter blocks for one route.
+ *
+ * Both routes need the same shape and the same image, and a route that declares
+ * its own `openGraph` replaces its parent's **wholesale** — the image the
+ * `app/opengraph-image.tsx` file convention would otherwise have contributed
+ * included. That is the trap this function exists to close: naming the card
+ * here means every route that sets a title also keeps a card, rather than
+ * silently shipping a link preview with no image.
+ *
+ * It is the same static PNG for every route. There is no per-address render.
+ */
+export function socialMetadata({
+  title,
+  description,
+  url,
+}: {
+  title: string;
+  description: string;
+  /** Relative to `SITE_URL`; Next resolves it against `metadataBase`. */
+  url: string;
+}): Pick<Metadata, "openGraph" | "twitter"> {
+  return {
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      title,
+      description,
+      url,
+      locale: "en_US",
+      images: [OG_IMAGE],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [OG_IMAGE],
+    },
+  };
+}

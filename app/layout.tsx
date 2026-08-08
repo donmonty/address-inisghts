@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
+import { socialMetadata, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,29 +15,19 @@ const geistMono = Geist_Mono({
 });
 
 /**
- * Site-wide metadata. `metadataBase` is what turns the file-convention OG and
- * Twitter images into the absolute URLs link-preview crawlers require; the
- * image itself is the static branded card in `app/opengraph-image.tsx`, shared
- * by every route including `/insights/[coords]`, which overrides only the title
- * and description.
+ * Site-wide metadata. `metadataBase` is the only reason the social card's URL
+ * comes out absolute, which is the one thing every link-preview crawler
+ * requires; the card itself is drawn in `app/opengraph-image.tsx`.
  */
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
   title: SITE_NAME,
   description: SITE_TAGLINE,
-  openGraph: {
-    type: "website",
-    siteName: SITE_NAME,
+  ...socialMetadata({
     title: SITE_NAME,
     description: SITE_TAGLINE,
     url: "/",
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: SITE_NAME,
-    description: SITE_TAGLINE,
-  },
+  }),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

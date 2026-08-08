@@ -44,8 +44,16 @@ const MUTED_FOREGROUND = "#8B949E";
 const BORDER = "#2A2F36";
 const PRIMARY = "#F4511E";
 
-/** The hero's three columns, with the orange rule on walking only. */
-const SCORES = ["Walking", "Driving", "Amenity density"];
+/**
+ * The hero's three rule-topped columns. Walking takes the orange rule and only
+ * walking does — the same rule the scorecard follows, stated as a flag rather
+ * than left to depend on this array's order.
+ */
+const SCORES = [
+  { label: "Walking", primary: true },
+  { label: "Driving", primary: false },
+  { label: "Amenity density", primary: false },
+];
 
 export default function OpenGraphImage() {
   return new ImageResponse(
@@ -93,19 +101,19 @@ export default function OpenGraphImage() {
         </div>
 
         <div style={{ display: "flex", gap: 32 }}>
-          {SCORES.map((label, index) => (
+          {SCORES.map(({ label, primary }) => (
             <div
               key={label}
               style={{
                 display: "flex",
                 flex: 1,
                 paddingTop: 20,
-                borderTop: `3px solid ${index === 0 ? PRIMARY : BORDER}`,
+                borderTop: `3px solid ${primary ? PRIMARY : BORDER}`,
                 fontFamily: "Geist Mono",
                 fontSize: 22,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: index === 0 ? FOREGROUND : MUTED_FOREGROUND,
+                color: primary ? FOREGROUND : MUTED_FOREGROUND,
               }}
             >
               {label}

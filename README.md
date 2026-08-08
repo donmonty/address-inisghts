@@ -170,22 +170,32 @@ retrofitted here.
 
 ## Testing boundary
 
-**Vitest, on the scoring seam only.** 138 tests across `lib/`, all hermetic — they read the committed
-fixtures, never the network.
+**Vitest over the pure modules in `lib/`.** 138 tests across ten files, all hermetic — they read the
+committed fixtures, never the network.
 
-The seam is [`lib/scoring.ts`](lib/scoring.ts): one pure, synchronous entry point that takes the twelve
-raw per-category Mapbox payloads exactly as fetched and returns the complete insight model the page
-renders. Radius filtering, `mapbox_id` dedupe, 1 km / 5 km bucketing, coverage, the three scores, the
-density index and band, per-category presence and nearest distance all live *inside* it. Everything
-mechanical — network, concurrency, retry, cache, rate limiter — lives outside it in
-[`lib/amenities.ts`](lib/amenities.ts) and is not tested.
+**The load-bearing suite is the scoring seam**, [`lib/scoring.ts`](lib/scoring.ts): one pure,
+synchronous entry point that takes the twelve raw per-category Mapbox payloads exactly as fetched and
+returns the complete insight model the page renders. Radius filtering, `mapbox_id` dedupe, 1 km / 5 km
+bucketing, coverage, the three scores, the density index and band, per-category presence and nearest
+distance all live *inside* it.
 
 Testing at that altitude rather than at `coverage()` / `walk()` / `drive()` is deliberate: the silent
-correctness rules only get covered up there. The suite asserts, among other things, that all four
-calibration addresses reproduce their published numbers exactly, that the 168 km transit station and
-237 km park in the Marfa fixture are discarded, that an empty category response scores as *absent*
-rather than erroring, that the depth term saturates instead of exceeding 30, that the band boundaries
-are exact at 60 / 25 / 8, and that the delta is coverage-to-coverage.
+correctness rules only get covered up there. It asserts, among other things, that all four calibration
+addresses reproduce their published numbers exactly, that the 168 km transit station and 237 km park in
+the Marfa fixture are discarded, that an empty category response scores as *absent* rather than
+erroring, that the depth term saturates instead of exceeding 30, that the band boundaries are exact at
+60 / 25 / 8, and that the delta is coverage-to-coverage.
+
+The other nine files cover the same kind of thing one layer out: the decidable parts that were pulled
+out of components precisely so they could be tested without rendering anything — filter and radius
+state (`nearby`), map styles, glyphs and viewport (`map`), drawer field extraction (`place`),
+suggestion handling (`search`), browser-local history (`recent`, `recent-store`), distance and hour
+formatting (`format`), and the error-digest contract that decides which message the error boundary
+shows (`insight-error`, `amenities`).
+
+**What is not tested:** the mechanics in [`lib/amenities.ts`](lib/amenities.ts) — the fan-out itself,
+concurrency, retry, the cache and the rate limiter. Only its two error types are pinned, and only for
+the digest contract that survives to the client. That module is exercised against the real API by hand.
 
 **No component tests, and no Playwright E2E.** These were **cut on time, deliberately — not deferred,
 not "next sprint".** The scoring is where the reasoning lives and where a test earns its keep; the

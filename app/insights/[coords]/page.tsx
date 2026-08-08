@@ -12,7 +12,7 @@ import { pageShell } from "@/components/insights/scorecard-shell";
 import { SelectionProvider } from "@/components/insights/selection-provider";
 import { VerdictStrip } from "@/components/insights/verdict-strip";
 import { getAddressInsight, type Point } from "@/lib/amenities";
-import { OG_IMAGE, SITE_NAME } from "@/lib/site";
+import { socialMetadata, SITE_NAME } from "@/lib/site";
 
 /**
  * The insights page: `/insights/[lat],[lng]?q=<address label>`.
@@ -38,44 +38,6 @@ import { OG_IMAGE, SITE_NAME } from "@/lib/site";
  * selection never enters the URL, so a shared link lands the recipient on the
  * address rather than on a `mapbox_id` that may no longer resolve.
  */
-/**
- * The shared link's title and description.
- *
- * Text only, and derived from nothing but the URL — it never calls
- * `getAddressInsight`, so a crawler hitting a pasted link costs no Mapbox
- * requests and no rate-limit budget for metadata. The image stays the static
- * branded card inherited from the root layout, for the same reason.
- */
-export async function generateMetadata({
-  params,
-  searchParams,
-}: PageProps<"/insights/[coords]">): Promise<Metadata> {
-  const { coords } = await params;
-  const { q } = await searchParams;
-  const label = typeof q === "string" && q.trim() !== "" ? q.trim() : coords;
-
-  const title = `${label} — ${SITE_NAME}`;
-  const description = `Walking, driving and amenity density scores for ${label}, with the categories that drove them.`;
-  return {
-    title,
-    description,
-    openGraph: {
-      type: "website",
-      siteName: SITE_NAME,
-      title,
-      description,
-      url: `/insights/${coords}`,
-      images: [OG_IMAGE],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [OG_IMAGE],
-    },
-  };
-}
-
 export default async function InsightsPage({
   params,
   searchParams,
@@ -84,8 +46,7 @@ export default async function InsightsPage({
   const point = parseCoords(coords);
   if (!point) notFound();
 
-  const { q } = await searchParams;
-  const label = typeof q === "string" && q.trim() !== "" ? q : coords;
+  const label = displayLabel(coords, (await searchParams).q);
 
   const insight = await getAddressInsight({ ...point, ip: await clientIp() });
 
@@ -103,6 +64,43 @@ export default async function InsightsPage({
       </NearbyProvider>
     </main>
   );
+}
+
+/**
+ * The shared link's title and description.
+ *
+ * Text only, and derived from nothing but the URL — it never calls
+ * `getAddressInsight`, so a crawler that hits a pasted link spends no Mapbox
+ * request and no rate-limit budget on metadata. For the same reason the card is
+ * the site-wide static one `socialMetadata` names: a per-address image would
+ * have to score the address to draw it.
+ */
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps<"/insights/[coords]">): Promise<Metadata> {
+  const { coords } = await params;
+  const label = displayLabel(coords, (await searchParams).q);
+
+  const title = `${label} — ${SITE_NAME}`;
+  const description = `Walking, driving and amenity density scores for ${label}, with the categories that drove them.`;
+
+  return {
+    title,
+    description,
+    ...socialMetadata({ title, description, url: `/insights/${coords}` }),
+  };
+}
+
+/**
+ * What the address is called on screen and in a link preview.
+ *
+ * `q` is cosmetic and can be anything — absent from a hand-typed URL, blank
+ * from a mangled share. The coordinates are always a truthful fallback, because
+ * they are what was actually scored.
+ */
+function displayLabel(coords: string, q: string | string[] | undefined): string {
+  return typeof q === "string" && q.trim() !== "" ? q.trim() : coords;
 }
 
 /**
