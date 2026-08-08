@@ -1,34 +1,34 @@
-import { Button } from "@/components/ui/button";
+import { AddressSearch } from "@/components/search/address-search";
+import { ExampleAddresses } from "@/components/search/example-addresses";
+import { RecentLookups } from "@/components/search/recent-lookups";
 
 /**
- * Placeholder home page. It exists to prove the design system is wired up —
- * the editorial type scale, the token table under both system themes, and the
- * orange used only as --primary/--ring. The real search box arrives later.
+ * The landing page: the headline, one search box, and two ways in for a visitor
+ * who has no address in mind — the four calibration examples, and whatever this
+ * browser has looked up before.
+ *
+ * Only the search box and the history are client-side; the examples are plain
+ * links from the server, because their coordinates are already known.
  */
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-10 px-6 py-24">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-12 px-6 py-24">
       <div className="flex flex-col gap-4">
-        <p className="eyebrow text-xs text-muted-foreground">Address Insights</p>
-        <h1 className="headline text-5xl text-balance sm:text-6xl">
+        <p className="eyebrow text-eyebrow text-muted-foreground">
+          Address Insights
+        </p>
+        <h1 className="headline text-4xl text-balance sm:text-5xl">
           What is daily life like from this front door?
         </h1>
-        <p className="max-w-xl text-lg text-muted-foreground">
+        <p className="text-lg text-muted-foreground">
           Type an address and get walking, driving and density scores for that
           exact point — with the working shown.
         </p>
       </div>
 
-      <div className="border-l-[3px] border-primary bg-muted px-5 py-4 text-sm">
-        Scaffold only. Search, scoring and the map land in later tickets.
-      </div>
-
-      <div className="flex items-center gap-4">
-        <Button>Search an address</Button>
-        <span className="eyebrow text-xs text-muted-foreground">
-          Mono label specimen
-        </span>
-      </div>
+      <AddressSearch />
+      <RecentLookups />
+      <ExampleAddresses />
     </main>
   );
 }
