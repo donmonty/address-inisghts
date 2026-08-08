@@ -148,12 +148,19 @@ export function MapBand({ address }: { address: Point }) {
       aria-label="Map of the nearby places"
     >
       <div
-        ref={container}
         className={cn(
           "h-full w-full transition-opacity duration-300",
           loaded ? "opacity-100" : "opacity-0",
         )}
-      />
+      >
+        {/* The veil is a wrapper rather than a class on the container itself:
+            GL JS adds `mapboxgl-map` to whatever element it is handed, and a
+            React-controlled `className` rewrites the attribute wholesale the
+            moment `loaded` flips — dropping the `position: relative` that keeps
+            the canvas and every marker inside the band. This div's class must
+            stay constant for that reason. */}
+        <div ref={container} className="h-full w-full" />
+      </div>
     </div>
   );
 }
