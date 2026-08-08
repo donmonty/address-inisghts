@@ -10,8 +10,5 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["lib/**/*.test.ts"],
-    // The suite's one seam is lib/scoring.ts, which lands with the scoring
-    // ticket. Drop this line once those tests exist.
-    passWithNoTests: true,
   },
 });
