@@ -80,6 +80,33 @@ non-rural address sits near the 300 ceiling, so a count term there measures the 
 
 These four double as the landing page's seeded examples.
 
+### Upstream drift: Marfa, observed 2026-08-07
+
+The table above is what the **committed fixtures** produce, and `lib/scoring.test.ts` pins it. The live API
+has since moved underneath one of the four.
+
+Scoring the four addresses against live Mapbox while building the scorecard, Marfa returned **70/88/13 with
+11 of 12 categories present** — against the 60/75/12 and 10 of 12 recorded above. The cause is a single
+category flipping: `school`, which returned zero results at capture time (see *Other findings*, below), now
+returns one at 346m. That is +3 weighted coverage within the walk and +3 within the drive, which moves all
+three published numbers at once.
+
+Three things follow, and none of them is a bug:
+
+- **The scoring is unchanged.** The same code produces the table's numbers from the captured payloads and
+  the new numbers from today's. The fixtures are hermetic on purpose, so the suite is unaffected.
+- **The constants do not need re-deriving.** Marfa moves from the middle of the Moderate band (12) to
+  slightly further inside it (13); no band boundary is crossed and no sensitivity table above changes its
+  conclusion. The depth target, the 24 denominator and the band edges were never load-bearing on this one
+  category.
+- **The fixtures are deliberately not recaptured.** Recapturing would silently rewrite the calibration
+  evidence a reviewer is meant to be able to check, and would trade a documented, explainable delta for a
+  moving target. Decided 2026-08-07.
+
+The general point is worth keeping: **these are live POI results, not a stable dataset.** Any address near a
+band edge or a category threshold can move without notice. That is exactly why the fixtures are committed
+and why the suite reads them rather than the network.
+
 ### Worked example: 5000 Legacy Dr, Plano
 
 Five categories have at least one POI within 1km: pharmacy (3 found, weight 3), school (3, weight 3),
@@ -158,7 +185,9 @@ distinct shops in dense buildings. Named as a limitation rather than papered ove
 - **Unfiltered results reach absurd distances.** Marfa returned a transit station at 168km and a park at
   237km. Radius filtering is correctness, not optimization.
 - **`school` can return zero.** Marfa returned no results at all for `school`, and one transit station at
-  168km. Sparse-address handling must tolerate empty category responses.
+  168km. Sparse-address handling must tolerate empty category responses. (This is the category that has
+  since drifted live — see *Upstream drift* above. The requirement stands regardless: the fixture still
+  carries the empty response, and an empty response must never be an error.)
 - **The delta is coverage-to-coverage, not a subtraction of the two displayed scores.** Subtracting walk
   from drive would give Marfa +15, an artifact of Marfa's walking depth penalty rather than anything a car
   reaches. Coverage-to-coverage correctly gives Marfa **0**: there is nothing to drive to either.
