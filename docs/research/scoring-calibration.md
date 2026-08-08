@@ -25,6 +25,11 @@ tiers and 24 changes with them.
 
 Distances are straight-line, from each feature's `distance` property. No street-network routing.
 
+The index rounds the per-km² density to one decimal before rounding to an integer, which is how the
+published values above were derived. It only bites on the half-way case: S Congress is 102 POIs →
+32.4676/km² → 32.5 → **33**, where a single rounding would give 32. `lib/scoring.ts` reproduces the
+two-step rounding deliberately.
+
 ## The constants and why
 
 | Constant | Value | Justification |
