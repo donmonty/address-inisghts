@@ -19,8 +19,10 @@ import { getAddressInsight, type Point } from "@/lib/amenities";
  * `q` is cosmetic and only ever displayed.
  *
  * The editorial scorecard runs top to bottom: hero, verdict strip, map band,
- * category coverage, the nearby places. The `error.tsx` / `loading.tsx`
- * treatment of the throws behind `getAddressInsight` follows in #18.
+ * category coverage, the nearby places. Both throws behind `getAddressInsight`
+ * — a category missing after its retry, and a spent rate-limit minute — land in
+ * the sibling `error.tsx`, and `loading.tsx` holds this same layout in `--muted`
+ * blocks while the fan-out runs.
  *
  * `NearbyProvider` holds the one `{ radius, filter }` the map band and the list
  * both read, which is what makes "the map renders exactly the current list" a
