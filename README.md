@@ -144,16 +144,3 @@ Next.js App Router (16.3) on Vercel, React 19, Tailwind 4, shadcn/ui, Mapbox GL 
 | [`lib/recent.ts`](lib/recent.ts) | `localStorage`-backed recent lookups. Nothing is ever sent anywhere. |
 
 
-
----
-
-## Where the reasoning lives
-
-| Document | What it settles |
-| --- | --- |
-| [docs/research/scoring-calibration.md](docs/research/scoring-calibration.md) | Every scoring constant, the four-address table, the sensitivity analysis, the dedupe measurement |
-| [docs/research/mapbox-limits-and-tokens.md](docs/research/mapbox-limits-and-tokens.md) | Free-tier allowances, billing units, rate limits, `pk.` vs `sk.`, URL restrictions, the caching stance |
-| [docs/research/mapbox-category-search.md](docs/research/mapbox-category-search.md) | The category endpoint's behaviour and its 25-result cap |
-| [docs/research/mapbox-category-ids.md](docs/research/mapbox-category-ids.md) | How the twelve canonical category IDs were verified |
-
-
