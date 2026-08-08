@@ -135,14 +135,20 @@ export function MapBand({ address }: { address: Point }) {
 
     for (const amenity of view.amenities) {
       if (pins.current.has(amenity.id)) continue;
-      pins.current.set(
-        amenity.id,
-        new mapboxgl.Marker({
-          element: amenityPin(amenity, () => selectRef.current(amenity)),
-        })
-          .setLngLat(amenity.coordinates)
-          .addTo(instance),
-      );
+
+      const marker = new mapboxgl.Marker({
+        element: amenityPin(amenity, () => selectRef.current(amenity)),
+      })
+        .setLngLat(amenity.coordinates)
+        .addTo(instance);
+
+      // GL JS stamps `role="img"` on whatever element it is handed, which
+      // overrides the button role the pin actually has and hides the one
+      // control on this map from assistive technology. The element is a
+      // `<button>`; its implicit role is the honest one.
+      marker.getElement().removeAttribute("role");
+
+      pins.current.set(amenity.id, marker);
     }
   }, [view.amenities, loaded]);
 
@@ -268,6 +274,14 @@ function amenityPin(amenity: Amenity, onSelect: () => void): HTMLElement {
         <path d="${MAKI_GLYPHS[amenity.category]}"/>
       </svg>
     </span>`;
-  element.addEventListener("click", onSelect);
+  // GL JS's drag handlers `preventDefault` the `mousedown` that reaches the map
+  // container, which cancels the focus a button click would otherwise carry —
+  // so the pin takes focus itself, and closing the drawer has somewhere to give
+  // the keyboard back to.
+  element.addEventListener("click", () => {
+    element.focus();
+    onSelect();
+  });
+
   return element;
 }

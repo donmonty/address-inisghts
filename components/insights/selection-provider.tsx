@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useRef, useState } from "react";
 
 import { useNearby } from "@/components/insights/nearby-provider";
 import type { Amenity } from "@/lib/scoring";
@@ -31,6 +31,8 @@ interface SelectionControls {
   hovered: string | null;
   select: (amenity: Amenity | null) => void;
   hover: (id: string | null) => void;
+  /** Puts the keyboard back on the row or pin the drawer was opened from. */
+  restoreFocus: () => void;
 }
 
 const SelectionContext = createContext<SelectionControls | null>(null);
@@ -40,6 +42,13 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
 
+  // What the drawer owes the keyboard back. Radix restores focus to a
+  // `Dialog.Trigger`, and this drawer has none — it is opened from a list row
+  // or a map pin — so closing would otherwise drop focus on `<body>` and lose
+  // the reader's place. Recorded at the click, which is the one moment the
+  // opener is reliably the active element.
+  const opener = useRef<HTMLElement | null>(null);
+
   const controls = useMemo<SelectionControls>(() => {
     const selected =
       view.amenities.find((amenity) => amenity.id === selectedId) ?? null;
@@ -47,8 +56,14 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
     return {
       selected,
       hovered,
-      select: (amenity) => setSelectedId(amenity?.id ?? null),
+      select: (amenity) => {
+        if (amenity) opener.current = document.activeElement as HTMLElement;
+        setSelectedId(amenity?.id ?? null);
+      },
       hover: setHovered,
+      restoreFocus: () => {
+        if (opener.current?.isConnected) opener.current.focus();
+      },
     };
   }, [view.amenities, selectedId, hovered]);
 

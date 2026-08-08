@@ -34,7 +34,7 @@ import { placeCard, type PlaceLink } from "@/lib/place";
  * visible on a phone and the pin the reader tapped stays linked to the card.
  */
 export function PlaceDrawer() {
-  const { selected, select } = useSelection();
+  const { selected, select, restoreFocus } = useSelection();
   const wide = useWide();
 
   // The place survives its own closing animation: Radix keeps the content
@@ -51,6 +51,13 @@ export function PlaceDrawer() {
       {card && (
         <SheetContent
           side={wide ? "right" : "bottom"}
+          // Radix hands focus back to a `Dialog.Trigger`; this drawer is opened
+          // from a list row or a map pin and has none, so the keyboard would be
+          // dropped on `<body>`. `restoreFocus` puts it back where it came from.
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            restoreFocus();
+          }}
           // Inline rather than Tailwind so the two numbers the map band also
           // reads are stated once, in `DRAWER`, instead of once here as an
           // arbitrary value and once there as a constant.
