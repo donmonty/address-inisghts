@@ -15,6 +15,7 @@
  * counts cache misses rather than page visits.
  */
 
+import { INSIGHT_ERROR_DIGEST } from "@/lib/insight-error";
 import {
   CATEGORY_IDS,
   scoreAddress,
@@ -58,8 +59,17 @@ export interface Point {
   lng: number;
 }
 
-/** A category the API never returned, after its retry. The page hard-fails. */
+/**
+ * A category the API never returned, after its retry. The page hard-fails.
+ *
+ * The `digest` is the one thing that reaches `error.tsx` intact: Next redacts a
+ * Server Component's message on the way to the browser, but respects a digest
+ * the error already carries. Without it the boundary could not tell this from
+ * the throttle in a deployed build. See `lib/insight-error.ts`.
+ */
 export class MissingCategoryError extends Error {
+  readonly digest = INSIGHT_ERROR_DIGEST.missingCategory;
+
   constructor(
     readonly categories: CategoryId[],
     cause?: unknown,
@@ -74,6 +84,8 @@ export class MissingCategoryError extends Error {
 
 /** More than 20 cache misses in a minute from one IP. */
 export class RateLimitError extends Error {
+  readonly digest = INSIGHT_ERROR_DIGEST.rateLimited;
+
   constructor() {
     super(`More than ${RATE_LIMIT_MISSES} lookups a minute from this address.`);
     this.name = "RateLimitError";

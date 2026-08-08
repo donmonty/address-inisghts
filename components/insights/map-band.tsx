@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { useNearby } from "@/components/insights/nearby-provider";
+import { mapBand } from "@/components/insights/scorecard-shell";
 import { useSelection } from "@/components/insights/selection-provider";
 import type { Point } from "@/lib/amenities";
 import {
@@ -37,10 +38,17 @@ import { cn } from "@/lib/utils";
  * would sit behind the drawer or off the band.
  *
  * Nothing else on the page waits on this component. The band holds its
- * `--muted` fill until GL JS fires `load`, and if the token is missing or the
- * constructor throws — no WebGL, a 403 on a preview deployment — it simply
- * stays muted while the list, the chips and the radius toggle keep working. The
- * copy that belongs in that empty band is #18's.
+ * `--muted` fill until GL JS fires `load`, and every way the map can die — a
+ * missing token, a constructor that throws for want of a WebGL context, tiles
+ * the token isn't allowed to fetch — ends in the same neutral MAP UNAVAILABLE
+ * treatment. Neutral, never `--destructive`: "the map didn't load" must not
+ * look as alarming as "we couldn't score this". The list, the chips, the radius
+ * toggle and the drawer are pure client-side reads of already-fetched data, so
+ * the page stays fully functional with a dead map.
+ *
+ * That state exists because GL JS does not throw on a tile or style auth
+ * failure — it fires an `error` event and leaves a blank canvas, which is
+ * indistinguishable from "still loading, forever".
  */
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -56,13 +64,33 @@ const FIT_PADDING = 56;
 /** Long enough to read as the same map moving, short enough not to be waited on. */
 const PAN_MS = 400;
 
+/**
+ * `loading` is the muted band before `load` fires; `unavailable` is the band
+ * that has given up and says so.
+ *
+ * `ready` wins over `unavailable`, not the other way round: an `error` for one
+ * failed tile followed by a successful `load` is a map that works, and a
+ * working map beats a notice about one that doesn't. The reverse — an error
+ * after `load` — is refused at the handler, so a drawn map is never taken away.
+ */
+type MapStatus = "loading" | "ready" | "unavailable";
+
+/**
+ * A missing token is known before anything renders, so the band opens on the
+ * notice rather than flashing muted and then correcting itself. `TOKEN` is
+ * inlined at build time into both the server and the client bundle, so the two
+ * agree and this cannot mismatch on hydration.
+ */
+const INITIAL_STATUS: MapStatus = TOKEN ? "loading" : "unavailable";
+
 export function MapBand({ address }: { address: Point }) {
   const { view } = useNearby();
   const { selected, hovered, select } = useSelection();
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const pins = useRef(new Map<string, mapboxgl.Marker>());
-  const [loaded, setLoaded] = useState(false);
+  const [status, setStatus] = useState<MapStatus>(INITIAL_STATUS);
+  const loaded = status === "ready";
 
   // The pins are built once each and outlive every selection, so the click
   // handler reads the current `select` off a ref rather than being a reason to
@@ -91,13 +119,28 @@ export function MapBand({ address }: { address: Point }) {
         attributionControl: true,
       });
     } catch {
-      // No WebGL context, or GL JS refused the token. The band stays muted and
-      // the rest of the page is untouched.
+      // No WebGL context, or GL JS refused the token outright. The rest of the
+      // page is untouched. Reported on a microtask rather than inline because
+      // this is the one failure GL JS delivers synchronously, and setting state
+      // in an effect body is a cascading render — every other path here already
+      // arrives in a callback.
+      queueMicrotask(() => setStatus("unavailable"));
       return;
     }
 
     map.current = instance;
-    instance.on("load", () => setLoaded(true));
+    instance.on("load", () => setStatus("ready"));
+
+    // The failure mode this state exists for. GL JS reports a 401 on the style
+    // or the tiles as an event, not a throw, so without this the band would sit
+    // muted and empty for as long as the reader was willing to wait.
+    //
+    // Only before `load`, though: once the map has drawn, a later error is a
+    // tile that failed on a flaky network or a sprite that didn't resolve, and
+    // replacing a working map with a notice about it would be a downgrade.
+    instance.on("error", () => {
+      setStatus((current) => (current === "ready" ? current : "unavailable"));
+    });
     new mapboxgl.Marker({ element: addressPin(), anchor: "bottom" })
       .setLngLat([lng, lat])
       .addTo(instance);
@@ -113,7 +156,7 @@ export function MapBand({ address }: { address: Point }) {
       dark.removeEventListener("change", followScheme);
       pinned.clear();
       map.current = null;
-      setLoaded(false);
+      setStatus(INITIAL_STATUS);
       instance.remove();
     };
   }, [lat, lng]);
@@ -211,12 +254,11 @@ export function MapBand({ address }: { address: Point }) {
     });
   }, [view.amenities, loaded, lat, lng]);
 
-  // 40vw so the band reaches its 420px ceiling at the 1120px page width and
-  // sits at ~360px where the grids collapse, rather than topping out short of
-  // the height the design asks for.
+  // The band's own dimensions live in `scorecard-shell.ts`, because the loading
+  // skeleton has to reserve exactly this height.
   return (
     <div
-      className="mt-12 h-[clamp(19rem,40vw,26.25rem)] overflow-hidden rounded-lg border bg-muted"
+      className={cn("relative", mapBand)}
       role="region"
       aria-label="Map of the nearby places"
     >
@@ -234,6 +276,33 @@ export function MapBand({ address }: { address: Point }) {
             stay constant for that reason. */}
         <div ref={container} className="h-full w-full" />
       </div>
+
+      {status === "unavailable" && <MapUnavailable />}
+    </div>
+  );
+}
+
+/**
+ * What the band says when there is no map.
+ *
+ * It deliberately does not say "preview deployment", because tiles can also
+ * fail on a flaky network and the copy would then be lying — it names the
+ * restriction and the two places the map is known to work, and stops there.
+ *
+ * `--muted-foreground` on the band's existing `--muted` fill, with no icon and
+ * no `--destructive` anywhere: the scores above are intact, and this notice
+ * must not read as though they aren't.
+ */
+function MapUnavailable() {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+      <p className="eyebrow text-eyebrow text-muted-foreground">
+        Map unavailable
+      </p>
+      <p className="max-w-[44ch] text-sm text-muted-foreground">
+        Tile access is URL-restricted. The map loads on localhost and on the
+        production domain.
+      </p>
     </div>
   );
 }

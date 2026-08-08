@@ -1,4 +1,12 @@
 import { Pill } from "@/components/insights/pill";
+import {
+  heroDescription,
+  heroGrid,
+  heroHeader,
+  heroHeadline,
+  heroNumeral,
+  heroRule,
+} from "@/components/insights/scorecard-shell";
 import type { AddressInsight } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 
@@ -21,15 +29,13 @@ export function ScoreHero({
   insight: AddressInsight;
 }) {
   return (
-    <header className="pt-18 pb-10">
+    <header className={heroHeader}>
       <p className="eyebrow text-eyebrow text-muted-foreground">
         Walkability report
       </p>
-      <h1 className="display-headline mt-3 max-w-[16ch] text-[clamp(2rem,4.5vw,3.25rem)] text-balance">
-        {label}
-      </h1>
+      <h1 className={heroHeadline}>{label}</h1>
 
-      <div className="mt-14 grid grid-cols-1 gap-8 wide:grid-cols-3">
+      <div className={heroGrid}>
         <Figure lead label="Walking score" value={insight.walk}>
           Tier-weighted category coverage within 1 km, plus a capped count of
           nearby places.
@@ -68,25 +74,13 @@ function Figure({
 }) {
   return (
     <div
-      className={cn(
-        "border-t-2 pt-4",
-        lead ? "border-primary" : "border-foreground",
-      )}
+      className={cn(heroRule, lead ? "border-primary" : "border-foreground")}
     >
       <span className="eyebrow block text-eyebrow text-muted-foreground">
         {label}
       </span>
-      <span
-        className={cn(
-          "numeral mt-3 mb-2 block text-[clamp(3.5rem,9vw,6.5rem)]",
-          lead && "text-primary",
-        )}
-      >
-        {value}
-      </span>
-      <p className="max-w-[26ch] text-sm leading-relaxed text-muted-foreground">
-        {children}
-      </p>
+      <span className={cn(heroNumeral, lead && "text-primary")}>{value}</span>
+      <p className={cn(heroDescription, "text-muted-foreground")}>{children}</p>
     </div>
   );
 }

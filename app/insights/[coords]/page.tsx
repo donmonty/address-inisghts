@@ -7,6 +7,7 @@ import { NearbyList } from "@/components/insights/nearby-list";
 import { NearbyProvider } from "@/components/insights/nearby-provider";
 import { PlaceDrawer } from "@/components/insights/place-drawer";
 import { ScoreHero } from "@/components/insights/score-hero";
+import { pageShell } from "@/components/insights/scorecard-shell";
 import { SelectionProvider } from "@/components/insights/selection-provider";
 import { VerdictStrip } from "@/components/insights/verdict-strip";
 import { getAddressInsight, type Point } from "@/lib/amenities";
@@ -19,8 +20,10 @@ import { getAddressInsight, type Point } from "@/lib/amenities";
  * `q` is cosmetic and only ever displayed.
  *
  * The editorial scorecard runs top to bottom: hero, verdict strip, map band,
- * category coverage, the nearby places. The `error.tsx` / `loading.tsx`
- * treatment of the throws behind `getAddressInsight` follows in #18.
+ * category coverage, the nearby places. Both throws behind `getAddressInsight`
+ * — a category missing after its retry, and a spent rate-limit minute — land in
+ * the sibling `error.tsx`, and `loading.tsx` holds this same layout in `--muted`
+ * blocks while the fan-out runs.
  *
  * `NearbyProvider` holds the one `{ radius, filter }` the map band and the list
  * both read, which is what makes "the map renders exactly the current list" a
@@ -47,7 +50,7 @@ export default async function InsightsPage({
   const insight = await getAddressInsight({ ...point, ip: await clientIp() });
 
   return (
-    <main className="mx-auto w-full max-w-[1120px] flex-1 px-6 pb-24">
+    <main className={pageShell}>
       <ScoreHero label={label} insight={insight} />
       <VerdictStrip verdict={insight.verdict} />
       <NearbyProvider insight={insight}>
