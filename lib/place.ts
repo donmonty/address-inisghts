@@ -193,15 +193,16 @@ function phoneLink(phone: string | null): PlaceLink | null {
 function websiteLink(website: string | null): PlaceLink | null {
   if (!website) return null;
 
-  let label = website;
+  // A bare host is still a website: it is given the scheme it meant rather than
+  // dropped, since an omitted row would read as a place that published none.
+  const href = /^https?:\/\//i.test(website) ? website : `https://${website}`;
+
   try {
-    label = new URL(website).hostname.replace(/^www\./, "");
+    return { label: new URL(href).hostname.replace(/^www\./, ""), href };
   } catch {
-    // Not an absolute URL. It can't be linked honestly, so it isn't a row.
+    // Not a URL at all. There is nothing to link, so there is no row.
     return null;
   }
-
-  return { label, href: website };
 }
 
 function closureFor(status: unknown): string | null {

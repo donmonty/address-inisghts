@@ -12,7 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { DrawerCover } from "@/lib/map";
+import { DRAWER } from "@/lib/map";
 import { placeCard, type PlaceLink } from "@/lib/place";
 
 /**
@@ -33,30 +33,6 @@ import { placeCard, type PlaceLink } from "@/lib/place";
  * right above 900px and rises from the bottom below it, so the map stays
  * visible on a phone and the pin the reader tapped stays linked to the card.
  */
-
-/** The one point the whole page collapses at — `--breakpoint-wide`. */
-const WIDE_BREAKPOINT = 901;
-/** Wide enough for an address line, narrow enough to leave the map readable. */
-const DRAWER_WIDTH = 420;
-/** The bottom sheet's share of the viewport, leaving the band above it. */
-const BOTTOM_SHARE = 0.7;
-
-/**
- * The slice of the viewport the open drawer covers, which is what the map band
- * needs to decide whether the selected pin is occluded. It lives here because
- * the geometry is this component's, and a second copy of 420px in the map would
- * be a rule two files could disagree about.
- */
-export function drawerCover(viewport: {
-  width: number;
-  height: number;
-}): DrawerCover {
-  if (viewport.width >= WIDE_BREAKPOINT) {
-    return { side: "right", size: DRAWER_WIDTH };
-  }
-  return { side: "bottom", size: viewport.height * BOTTOM_SHARE };
-}
-
 export function PlaceDrawer() {
   const { selected, select } = useSelection();
   const wide = useWide();
@@ -75,7 +51,15 @@ export function PlaceDrawer() {
       {card && (
         <SheetContent
           side={wide ? "right" : "bottom"}
-          className="gap-0 overflow-y-auto data-[side=bottom]:h-[70vh] data-[side=right]:w-[26.25rem] data-[side=right]:sm:max-w-[26.25rem]"
+          // Inline rather than Tailwind so the two numbers the map band also
+          // reads are stated once, in `DRAWER`, instead of once here as an
+          // arbitrary value and once there as a constant.
+          style={
+            wide
+              ? { width: DRAWER.width, maxWidth: DRAWER.width }
+              : { height: `${DRAWER.bottomShare * 100}vh` }
+          }
+          className="gap-0 overflow-y-auto"
         >
           {card.closure && (
             <p className="mx-4 mt-4 rounded-md border border-destructive px-3 py-2 text-[0.8125rem] text-destructive">
@@ -103,12 +87,12 @@ export function PlaceDrawer() {
             )}
             {card.hours && <p className="text-[0.9375rem]">{card.hours}</p>}
             {card.phone && (
-              <Row link={card.phone} className="tabular-nums" />
+              <ContactLink link={card.phone} className="tabular-nums" />
             )}
             {card.website && (
-              <Row link={card.website} external>
+              <ContactLink link={card.website} external>
                 <ExternalLinkIcon className="size-3.5 shrink-0 text-muted-foreground" />
-              </Row>
+              </ContactLink>
             )}
             {card.note && (
               <p className="text-[0.9375rem] text-muted-foreground">
@@ -137,7 +121,7 @@ export function PlaceDrawer() {
 }
 
 /** A contact row: the label as published, the href as it will be followed. */
-function Row({
+function ContactLink({
   link,
   external = false,
   className,
@@ -170,7 +154,7 @@ function useWide(): boolean {
   const [wide, setWide] = useState(false);
 
   useEffect(() => {
-    const query = window.matchMedia(`(min-width: ${WIDE_BREAKPOINT}px)`);
+    const query = window.matchMedia(`(min-width: ${DRAWER.wideBreakpoint}px)`);
     const sync = () => setWide(query.matches);
 
     sync();

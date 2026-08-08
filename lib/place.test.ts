@@ -182,6 +182,18 @@ describe("the contact rows", () => {
     });
   });
 
+  it("gives a bare host the scheme it meant rather than dropping the row", () => {
+    const card = placeCard(
+      place({ metadata: { website: "esbnyc.com" } }),
+      SUNDAY,
+    );
+
+    expect(card.website).toEqual({
+      label: "esbnyc.com",
+      href: "https://esbnyc.com",
+    });
+  });
+
   it("shows the full address as published", () => {
     const card = placeCard(
       place({ full_address: "60 W 33rd St, New York, New York 10001" }),

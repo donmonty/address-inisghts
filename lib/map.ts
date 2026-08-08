@@ -82,6 +82,21 @@ export const MAKI_GLYPHS: Record<CategoryId, string> = {
  * The address is always inside, so a filter whose results all sit on one side
  * of it never pans the reader's own front door off the band.
  */
+export function mapBounds(
+  address: Point,
+  amenities: Amenity[],
+): [[number, number], [number, number]] | null {
+  if (amenities.length === 0) return null;
+
+  const lngs = [address.lng, ...amenities.map((a) => a.coordinates[0])];
+  const lats = [address.lat, ...amenities.map((a) => a.coordinates[1])];
+
+  return [
+    [Math.min(...lngs), Math.min(...lats)],
+    [Math.max(...lngs), Math.max(...lats)],
+  ];
+}
+
 /** A box in viewport pixels — the band's own `getBoundingClientRect`. */
 export interface BandRect {
   top: number;
@@ -95,6 +110,32 @@ export interface DrawerCover {
   side: "right" | "bottom";
   /** Its width on the right, its height at the bottom. */
   size: number;
+}
+
+/**
+ * The place drawer's geometry, which the map needs as much as the drawer does:
+ * one is a sheet the reader opens, the other is the slice of the band that pin
+ * has just disappeared behind. Two copies of 420px is a rule two files could
+ * disagree about, so both read these.
+ */
+export const DRAWER = {
+  /** The one point the whole page collapses at — `--breakpoint-wide`. */
+  wideBreakpoint: 901,
+  /** Wide enough for an address line, narrow enough to leave the map readable. */
+  width: 420,
+  /** The bottom sheet's share of the viewport, leaving the band above it. */
+  bottomShare: 0.7,
+} as const;
+
+/** Which edge the drawer takes at this viewport, and how much of it it covers. */
+export function drawerCover(viewport: {
+  width: number;
+  height: number;
+}): DrawerCover {
+  if (viewport.width >= DRAWER.wideBreakpoint) {
+    return { side: "right", size: DRAWER.width };
+  }
+  return { side: "bottom", size: viewport.height * DRAWER.bottomShare };
 }
 
 /**
@@ -152,9 +193,10 @@ export function panOffset({
  * One axis of the decision: the slice of the band that is both on screen and
  * clear of the drawer, and whether the pin is inside it.
  *
- * A slice too thin to hold the margins still counts as visible band — a 40px
- * strip above a bottom sheet is where the pin has to go — so the target
- * collapses to its middle rather than the rule giving up.
+ * A slice too thin to hold the margins is still visible band — a 40px strip
+ * above a bottom sheet is where the pin has to go — so the margins are dropped
+ * there rather than the rule giving up: a pin already inside that strip is in
+ * sight and must not be moved, and one outside it is aimed at its middle.
  */
 function axis(
   at: number,
@@ -166,25 +208,10 @@ function axis(
   const end = Math.min(length, uncovered - offset);
   if (end <= start) return null;
 
-  const from = start + PIN_MARGIN;
-  const to = end - PIN_MARGIN;
-  if (to <= from) return { target: (start + end) / 2, visible: false };
+  const roomy = end - start > 2 * PIN_MARGIN;
+  const from = roomy ? start + PIN_MARGIN : start;
+  const to = roomy ? end - PIN_MARGIN : end;
 
   const visible = at >= from && at <= to;
   return { target: visible ? at : (from + to) / 2, visible };
-}
-
-export function mapBounds(
-  address: Point,
-  amenities: Amenity[],
-): [[number, number], [number, number]] | null {
-  if (amenities.length === 0) return null;
-
-  const lngs = [address.lng, ...amenities.map((a) => a.coordinates[0])];
-  const lats = [address.lat, ...amenities.map((a) => a.coordinates[1])];
-
-  return [
-    [Math.min(...lngs), Math.min(...lats)],
-    [Math.max(...lngs), Math.max(...lats)],
-  ];
 }

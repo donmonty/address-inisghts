@@ -6,10 +6,15 @@ import { useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { useNearby } from "@/components/insights/nearby-provider";
-import { drawerCover } from "@/components/insights/place-drawer";
 import { useSelection } from "@/components/insights/selection-provider";
 import type { Point } from "@/lib/amenities";
-import { MAKI_GLYPHS, MAP_STYLES, mapBounds, panOffset } from "@/lib/map";
+import {
+  drawerCover,
+  MAKI_GLYPHS,
+  MAP_STYLES,
+  mapBounds,
+  panOffset,
+} from "@/lib/map";
 import type { Amenity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 

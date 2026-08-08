@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { MAKI_GLYPHS, MAP_STYLES, mapBounds, panOffset } from "@/lib/map";
+import {
+  drawerCover,
+  MAKI_GLYPHS,
+  MAP_STYLES,
+  mapBounds,
+  panOffset,
+} from "@/lib/map";
 import { CATEGORY_IDS, type Amenity, type CategoryId } from "@/lib/scoring";
 
 /*
@@ -138,6 +144,12 @@ describe("the pan on selection", () => {
     expect(landsAt(offset!).y).toBeGreaterThan(0);
   });
 
+  it("stays put for a pin already sitting in a strip too thin for the margins", () => {
+    // 800 - 560 leaves 240px of viewport, and the band starts 200px down it:
+    // a 40px sliver, narrower than the margins, with the pin inside it.
+    expect(panOffset({ pin: { x: 200, y: 20 }, band, ...phone })).toBeNull();
+  });
+
   it("leaves the camera alone when nothing of the band is visible", () => {
     expect(
       panOffset({
@@ -146,5 +158,21 @@ describe("the pan on selection", () => {
         ...desktop,
       }),
     ).toBeNull();
+  });
+});
+
+describe("the drawer's cover", () => {
+  it("takes the right-hand 420px above the collapse point", () => {
+    expect(drawerCover({ width: 1400, height: 900 })).toEqual({
+      side: "right",
+      size: 420,
+    });
+  });
+
+  it("takes 70vh from the bottom below it, leaving the band above", () => {
+    expect(drawerCover({ width: 420, height: 800 })).toEqual({
+      side: "bottom",
+      size: 560,
+    });
   });
 });
