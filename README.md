@@ -16,13 +16,12 @@ Live: <https://address-insights-monty.vercel.app>
 - [The scoring](#the-scoring)
 - [The BANANA instruction](#the-banana-instruction)
 - [Architecture](#architecture)
-- [Where the reasoning lives](#where-the-reasoning-lives)
 
 ---
 
 ## Authorship: who wrote what
 
-**Claude Code generated substantially all of the code in this repository.** Every file under
+**Claude Code generated most of the code in this repository.** Every file under
 `app/`, `lib/` and `components/`, every test, every research document in `docs/research/`, and
 this README were written by the agent.
 
