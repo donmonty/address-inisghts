@@ -8,6 +8,13 @@ import { cn } from "@/lib/utils";
  * only, never a surface. A filled lozenge would also out-shout the walking
  * numeral, which is the one figure in the hero meant to lead.
  */
+/**
+ * The shape itself, so the nearby list's filter chips — which must be
+ * `<button>`s — can be the same lozenge without a second definition of it.
+ */
+export const pillShape =
+  "eyebrow inline-flex items-center gap-[0.4em] rounded-full border px-[0.7rem] py-[0.3rem] text-eyebrow whitespace-nowrap";
+
 export function Pill({
   tone = "neutral",
   className,
@@ -20,7 +27,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        "eyebrow inline-flex items-center gap-[0.4em] rounded-full border px-[0.7rem] py-[0.3rem] text-eyebrow whitespace-nowrap",
+        pillShape,
         tone === "primary" && "border-primary font-semibold text-primary",
         className,
       )}

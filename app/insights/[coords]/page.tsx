@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { CoverageCards } from "@/components/insights/coverage-cards";
+import { NearbyList } from "@/components/insights/nearby-list";
 import { ScoreHero } from "@/components/insights/score-hero";
 import { VerdictStrip } from "@/components/insights/verdict-strip";
 import { getAddressInsight, type Point } from "@/lib/amenities";
@@ -14,9 +15,13 @@ import { getAddressInsight, type Point } from "@/lib/amenities";
  * `q` is cosmetic and only ever displayed.
  *
  * The editorial scorecard runs top to bottom: hero, verdict strip, category
- * coverage. The map band and the amenity list slot in below `CoverageCards` in
- * the following tickets, as does the `error.tsx` / `loading.tsx` treatment of
- * the throws behind `getAddressInsight`.
+ * coverage, the nearby places. The map band slots in between the strip and the
+ * coverage cards in the following ticket, as does the `error.tsx` /
+ * `loading.tsx` treatment of the throws behind `getAddressInsight`.
+ *
+ * `NearbyList` is the page's only Client Component, and it receives the whole
+ * insight because both radii are already in it — the 5 km expander is a state
+ * change, never a request.
  */
 export default async function InsightsPage({
   params,
@@ -36,6 +41,7 @@ export default async function InsightsPage({
       <ScoreHero label={label} insight={insight} />
       <VerdictStrip verdict={insight.verdict} />
       <CoverageCards tiers={insight.tiers} />
+      <NearbyList insight={insight} />
     </main>
   );
 }
