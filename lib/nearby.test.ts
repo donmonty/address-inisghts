@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest";
 import { selectNearby } from "@/lib/nearby";
 import type { Amenity, CategoryId, MapboxFeature } from "@/lib/scoring";
 
-/**
+/*
  * The "What's nearby" view state. The component that renders it holds two
  * pieces of state — radius and filter — and nothing else; every rule about
  * which rows, which chips, which expander and which line of copy lives here,
  * which is what keeps it testable under the spec's "no component tests"
  * boundary.
  */
+
 const amenity = (
   id: string,
   category: CategoryId,
@@ -27,7 +28,7 @@ const amenity = (
 });
 
 /** `count` amenities of one category, 10 m apart, starting at `from`. */
-const run = (category: CategoryId, count: number, from = 10): Amenity[] =>
+const series = (category: CategoryId, count: number, from = 10): Amenity[] =>
   Array.from({ length: count }, (_, i) =>
     amenity(`${category}-${i}`, category, from + i * 10),
   );
@@ -111,7 +112,9 @@ describe("the filter chips", () => {
   });
 
   it("falls back to All when the filtered category is absent from the radius", () => {
-    // Reachable by filtering at 5 km and then collapsing back to 1 km.
+    // Not reachable through the chips alone — the expander is hidden while
+    // filtered — but the invariant holds regardless: no empty list under a
+    // chip the row isn't showing.
     const insight = insightOf(
       [amenity("a", "cafe", 100)],
       [amenity("b", "library", 4000)],
@@ -127,7 +130,7 @@ describe("the filter chips", () => {
 describe("the 24-cap", () => {
   it("caps the default All view at the nearest 24 within 1 km", () => {
     const view = selectNearby({
-      insight: insightOf(run("restaurant", 40)),
+      insight: insightOf(series("restaurant", 40)),
       radius: "1km",
       filter: "all",
     });
@@ -138,7 +141,7 @@ describe("the 24-cap", () => {
 
   it("does not cap the 5 km All view — Show all means all", () => {
     const view = selectNearby({
-      insight: insightOf(run("restaurant", 40)),
+      insight: insightOf(series("restaurant", 40)),
       radius: "5km",
       filter: "all",
     });
@@ -148,7 +151,7 @@ describe("the 24-cap", () => {
 
   it("does not cap a filtered view — filtering means show me all of these", () => {
     const view = selectNearby({
-      insight: insightOf([...run("restaurant", 25), amenity("c", "cafe", 5)]),
+      insight: insightOf([...series("restaurant", 25), amenity("c", "cafe", 5)]),
       radius: "1km",
       filter: "restaurant",
     });
@@ -160,7 +163,7 @@ describe("the 24-cap", () => {
 
 describe("the expander", () => {
   it("offers the 5 km set by its full count", () => {
-    const insight = insightOf(run("cafe", 30), run("park", 12, 2000));
+    const insight = insightOf(series("cafe", 30), series("park", 12, 2000));
 
     const view = selectNearby({ insight, radius: "1km", filter: "all" });
 
@@ -168,7 +171,7 @@ describe("the expander", () => {
   });
 
   it("offers the way back once expanded", () => {
-    const insight = insightOf(run("cafe", 30), run("park", 12, 2000));
+    const insight = insightOf(series("cafe", 30), series("park", 12, 2000));
 
     const view = selectNearby({ insight, radius: "5km", filter: "all" });
 
@@ -176,7 +179,7 @@ describe("the expander", () => {
   });
 
   it("stays live when nothing is within 1 km", () => {
-    const insight = insightOf([], run("park", 3, 2000));
+    const insight = insightOf([], series("park", 3, 2000));
 
     const view = selectNearby({ insight, radius: "1km", filter: "all" });
 
@@ -184,7 +187,7 @@ describe("the expander", () => {
   });
 
   it("drops the expander when 5 km adds nothing to walk to", () => {
-    const insight = insightOf(run("cafe", 5));
+    const insight = insightOf(series("cafe", 5));
 
     const view = selectNearby({ insight, radius: "1km", filter: "all" });
 
@@ -192,7 +195,7 @@ describe("the expander", () => {
   });
 
   it("drops the expander in a filtered view", () => {
-    const insight = insightOf(run("cafe", 5), run("park", 12, 2000));
+    const insight = insightOf(series("cafe", 5), series("park", 12, 2000));
 
     const view = selectNearby({ insight, radius: "1km", filter: "cafe" });
 
@@ -203,7 +206,7 @@ describe("the expander", () => {
 describe("the sparse copy", () => {
   it("owns an empty 1 km radius rather than widening it", () => {
     const view = selectNearby({
-      insight: insightOf([], run("park", 3, 2000)),
+      insight: insightOf([], series("park", 3, 2000)),
       radius: "1km",
       filter: "all",
     });
@@ -215,7 +218,7 @@ describe("the sparse copy", () => {
 
   it("nudges a sparse-but-not-empty 1 km radius towards the 5 km view", () => {
     const view = selectNearby({
-      insight: insightOf(run("cafe", 4), run("park", 12, 2000)),
+      insight: insightOf(series("cafe", 4), series("park", 12, 2000)),
       radius: "1km",
       filter: "all",
     });
@@ -225,7 +228,7 @@ describe("the sparse copy", () => {
 
   it("says nothing when the walk is well populated", () => {
     const view = selectNearby({
-      insight: insightOf(run("cafe", 30), run("park", 12, 2000)),
+      insight: insightOf(series("cafe", 30), series("park", 12, 2000)),
       radius: "1km",
       filter: "all",
     });
@@ -235,7 +238,7 @@ describe("the sparse copy", () => {
 
   it("says nothing about a sparse walk once the reader has expanded", () => {
     const view = selectNearby({
-      insight: insightOf(run("cafe", 4), run("park", 12, 2000)),
+      insight: insightOf(series("cafe", 4), series("park", 12, 2000)),
       radius: "5km",
       filter: "all",
     });
@@ -243,23 +246,69 @@ describe("the sparse copy", () => {
     expect(view.note).toBeNull();
   });
 
-  it("does not nudge towards a 5 km view that adds nothing", () => {
+  it("never points at a 5 km view that adds nothing", () => {
+    // The expander is hidden in this case, so copy saying "try the 5 km view"
+    // would be instructing the reader to press a button that isn't there.
     const view = selectNearby({
-      insight: insightOf(run("cafe", 4)),
+      insight: insightOf(series("cafe", 4)),
       radius: "1km",
       filter: "all",
     });
 
-    expect(view.note).toBeNull();
+    expect(view.note).toBe(
+      "Only 4 places within 1 km, and nothing more within 5 km.",
+    );
+  });
+
+  it("owns an address with nothing within either radius", () => {
+    const view = selectNearby({
+      insight: insightOf([]),
+      radius: "1km",
+      filter: "all",
+    });
+
+    expect(view.note).toBe("No amenities within 5 km of this address.");
+  });
+
+  it("counts one place as a place", () => {
+    const view = selectNearby({
+      insight: insightOf(series("cafe", 1), series("park", 2, 2000)),
+      radius: "1km",
+      filter: "all",
+    });
+
+    expect(view.note).toBe("Only 1 place within 1 km. Try the 5 km view.");
   });
 });
 
 describe("the heading count", () => {
   it("counts every place in the current radius, cap or no cap", () => {
-    const insight = insightOf(run("cafe", 30), run("park", 12, 2000));
+    const insight = insightOf(series("cafe", 30), series("park", 12, 2000));
 
     expect(selectNearby({ insight, radius: "1km", filter: "all" }).total).toBe(30);
     expect(selectNearby({ insight, radius: "5km", filter: "all" }).total).toBe(42);
     expect(selectNearby({ insight, radius: "5km", filter: "park" }).total).toBe(12);
+  });
+
+  it("says how many the cap is hiding, and only while it is hiding any", () => {
+    const insight = insightOf(series("cafe", 30), series("park", 12, 2000));
+
+    expect(selectNearby({ insight, radius: "1km", filter: "all" }).summary).toBe(
+      "Nearest 24 of 30 within 1 km",
+    );
+    expect(selectNearby({ insight, radius: "5km", filter: "all" }).summary).toBe(
+      "42 places within 5 km",
+    );
+    expect(selectNearby({ insight, radius: "1km", filter: "cafe" }).summary).toBe(
+      "30 places within 1 km",
+    );
+  });
+
+  it("counts one place as a place", () => {
+    const insight = insightOf([amenity("a", "cafe", 100)]);
+
+    expect(selectNearby({ insight, radius: "1km", filter: "all" }).summary).toBe(
+      "1 place within 1 km",
+    );
   });
 });

@@ -9,7 +9,6 @@ import {
   selectNearby,
   type NearbyFilter,
   type NearbyRadius,
-  type NearbyView,
 } from "@/lib/nearby";
 import type { AddressInsight, Amenity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
@@ -25,7 +24,9 @@ import { cn } from "@/lib/utils";
  * The only client state is the radius and the filter. Both radii arrived in the
  * insight the server already scored, so the expander and the chips are pure
  * reads — no request, no loading state, and nothing here is coupled to the map
- * being alive.
+ * being alive. The two are independent: the expander is hidden in a filtered
+ * view, where the cap it relieves doesn't apply, but the radius it set survives
+ * the filter and is still in force when the reader returns to All.
  *
  * Orange is spent on one thing in this section: the active chip, on its border
  * and text. Distances stay on the neutral ladder, unlike the coverage cards —
@@ -45,7 +46,7 @@ export function NearbyList({ insight }: { insight: AddressInsight }) {
           What&rsquo;s nearby
         </h2>
         <span className="eyebrow text-eyebrow text-muted-foreground">
-          {countLabel(view, radius)}
+          {view.summary}
         </span>
       </header>
 
@@ -144,17 +145,4 @@ function Chip({
       {label}
     </button>
   );
-}
-
-/**
- * The header's right-hand count. It says "nearest N of M" only when the cap is
- * actually hiding something, so the number never implies a limit that isn't
- * being applied.
- */
-function countLabel(view: NearbyView, radius: NearbyRadius): string {
-  const within = radius === "1km" ? "within 1 km" : "within 5 km";
-  const shown = view.amenities.length;
-
-  if (shown < view.total) return `Nearest ${shown} of ${view.total} ${within}`;
-  return `${view.total} ${view.total === 1 ? "place" : "places"} ${within}`;
 }
