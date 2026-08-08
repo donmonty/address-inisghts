@@ -18,6 +18,17 @@ export const pageShell = "mx-auto w-full max-w-[1120px] flex-1 px-6 pb-24";
 
 /** The hero block, the rule-topped score grid, and the type inside a column. */
 export const heroHeader = "pt-18 pb-10";
+
+/**
+ * The eyebrow line: the report's name, and the way out of it.
+ *
+ * It wraps rather than truncates. At ~360px the two eyebrows do not fit on one
+ * line, and the alternatives both cost more than a line of 11px type — hiding
+ * the label would drop what the report *is* on the device where context matters
+ * most, and shortening the link would mean two strings for one action.
+ */
+export const heroEyebrowRow =
+  "flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2";
 export const heroGrid = "mt-14 grid grid-cols-1 gap-8 wide:grid-cols-3";
 export const heroRule = "border-t-2 pt-4";
 export const heroHeadline =

@@ -3,6 +3,7 @@ import {
   coverageHeader,
   coverageSection,
   heroDescription,
+  heroEyebrowRow,
   heroGrid,
   heroHeader,
   heroHeadline,
@@ -16,6 +17,7 @@ import {
   tierCardRow,
   verdictStrip,
 } from "@/components/insights/scorecard-shell";
+import { SearchAnotherLink } from "@/components/insights/search-another-link";
 import { cn } from "@/lib/utils";
 
 /**
@@ -54,8 +56,17 @@ const stackedLine = "-my-[3px] bg-clip-content py-[3px]";
  * measurements that drift the first time the type scale is touched — the
  * numeral bar is exactly as tall as a numeral because it *is* one.
  *
- * The blocks carry no visible copy and the whole skeleton is `aria-hidden`, so
- * the one thing a screen reader gets is the live region: "Loading insights".
+ * The blocks carry no visible copy and every one of them is `aria-hidden`, so
+ * what a screen reader gets is the live region — "Loading insights" — and the
+ * one real control below.
+ *
+ * **The way out is live here, not painted on.** Every other element is a
+ * placeholder because it *cannot* be real yet; it is waiting on the fan-out.
+ * `SearchAnotherLink` isn't — it depends on no data. A visitor who mistyped is
+ * exactly the person watching this screen, and a two-second wait is exactly
+ * when they want out, so this renders the same working link the loaded page
+ * does. That is why the `aria-hidden` lives on `Block` itself rather than on a
+ * wrapper around the whole page: a wrapper would have to swallow the link too.
  */
 export default function InsightsLoading() {
   return (
@@ -64,53 +75,54 @@ export default function InsightsLoading() {
         Loading insights
       </div>
 
-      <div aria-hidden="true">
-        <header className={heroHeader}>
+      <header className={heroHeader}>
+        <div className={heroEyebrowRow}>
           <Block className="eyebrow text-eyebrow">Walkability report</Block>
-          <Block className={heroHeadline}>350 5th Avenue</Block>
+          <SearchAnotherLink />
+        </div>
+        <Block className={heroHeadline}>350 5th Avenue</Block>
 
-          {/* The three columns don't share a description length, so each one
-              stands in for the real copy it will be replaced by, down to how
-              many lines that runs to at `max-w-[26ch]`. Above the collapse the
-              row is as tall as the walking column, which is three lines
-              whatever the scores are, so the match there is exact. Below it the
-              columns stack and driving's own height depends on the data — one
-              line, or a `Pill` and a line when a car adds something — which no
-              fixed skeleton can track. */}
-          <div className={heroGrid}>
-            <FigureSkeleton lead label="Walking score" lines={3} />
-            <FigureSkeleton label="Driving score" lines={1} />
-            <FigureSkeleton label="Amenity density" lines={2} />
-          </div>
+        {/* The three columns don't share a description length, so each one
+            stands in for the real copy it will be replaced by, down to how
+            many lines that runs to at `max-w-[26ch]`. Above the collapse the
+            row is as tall as the walking column, which is three lines
+            whatever the scores are, so the match there is exact. Below it the
+            columns stack and driving's own height depends on the data — one
+            line, or a `Pill` and a line when a car adds something — which no
+            fixed skeleton can track. */}
+        <div className={heroGrid}>
+          <FigureSkeleton lead label="Walking score" lines={3} />
+          <FigureSkeleton label="Driving score" lines={1} />
+          <FigureSkeleton label="Amenity density" lines={2} />
+        </div>
+      </header>
+
+      {/* The verdict strip is a `--muted` surface already, so its lines take
+          `--border` — the next step down the same neutral ladder. */}
+      <div className={cn(verdictStrip, stackedLines)}>
+        <Block className={cn("max-w-full bg-border", stackedLine)}>
+          Twelve of twelve categories within a kilometre, which is as complete as
+          this score gets.
+        </Block>
+        <Block className={cn("bg-border", stackedLine)}>
+          Everyday errands are on foot.
+        </Block>
+      </div>
+
+      <div className={mapBand} />
+
+      <section className={coverageSection}>
+        <header className={coverageHeader}>
+          <Block className="eyebrow text-eyebrow">Category coverage</Block>
+          <Block className="eyebrow text-eyebrow">12 of 12 present</Block>
         </header>
 
-        {/* The verdict strip is a `--muted` surface already, so its lines take
-            `--border` — the next step down the same neutral ladder. */}
-        <div className={cn(verdictStrip, stackedLines)}>
-          <Block className={cn("max-w-full bg-border", stackedLine)}>
-            Twelve of twelve categories within a kilometre, which is as complete
-            as this score gets.
-          </Block>
-          <Block className={cn("bg-border", stackedLine)}>
-            Everyday errands are on foot.
-          </Block>
+        <div className={coverageGrid}>
+          <TierCardSkeleton />
+          <TierCardSkeleton />
+          <TierCardSkeleton />
         </div>
-
-        <div className={mapBand} />
-
-        <section className={coverageSection}>
-          <header className={coverageHeader}>
-            <Block className="eyebrow text-eyebrow">Category coverage</Block>
-            <Block className="eyebrow text-eyebrow">12 of 12 present</Block>
-          </header>
-
-          <div className={coverageGrid}>
-            <TierCardSkeleton />
-            <TierCardSkeleton />
-            <TierCardSkeleton />
-          </div>
-        </section>
-      </div>
+      </section>
     </main>
   );
 }
@@ -170,8 +182,12 @@ function TierCardSkeleton() {
 /**
  * A muted bar exactly the size of the text it stands in for. The text is really
  * there — it is what gives the bar its height and width — and it is transparent
- * on top of the fill, so nothing of it is readable and nothing of it is
- * announced (the skeleton above is `aria-hidden` wholesale).
+ * on top of the fill, so nothing of it is readable.
+ *
+ * `aria-hidden` sits here rather than on a wrapper around the page, so that the
+ * one real control in the skeleton — the way out — stays announced. Everything
+ * else in the tree is an empty structural element, which announces nothing on
+ * its own.
  *
  * The transparent colour is an inline style rather than `text-transparent`,
  * because `tailwind-merge` reads the type scale's own `text-eyebrow` as a
@@ -187,6 +203,7 @@ function Block({
 }) {
   return (
     <span
+      aria-hidden="true"
       style={{ color: "transparent" }}
       className={cn(
         "block w-fit max-w-full rounded-sm bg-muted select-none",

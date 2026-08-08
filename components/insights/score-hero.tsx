@@ -1,18 +1,25 @@
 import { Pill } from "@/components/insights/pill";
 import {
   heroDescription,
+  heroEyebrowRow,
   heroGrid,
   heroHeader,
   heroHeadline,
   heroNumeral,
   heroRule,
 } from "@/components/insights/scorecard-shell";
+import { SearchAnotherLink } from "@/components/insights/search-another-link";
 import type { AddressInsight } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 
 /**
  * The hero: eyebrow, the address as the headline, and the three scores as
  * oversized numerals in a rule-topped three-column grid.
+ *
+ * The eyebrow line carries the page's only navigation. It is typographic and
+ * not a button: the scorecard's one button-shaped control class is the nearby
+ * filter pills, and a second would read as a second kind of thing. It also
+ * costs no vertical space, because that line was already there.
  *
  * Walking leads and is the only one of the three carrying orange — its rule and
  * its numeral. Driving and density take the neutral `--foreground` rule, so the
@@ -30,9 +37,12 @@ export function ScoreHero({
 }) {
   return (
     <header className={heroHeader}>
-      <p className="eyebrow text-eyebrow text-muted-foreground">
-        Walkability report
-      </p>
+      <div className={heroEyebrowRow}>
+        <p className="eyebrow text-eyebrow text-muted-foreground">
+          Walkability report
+        </p>
+        <SearchAnotherLink />
+      </div>
       <h1 className={heroHeadline}>{label}</h1>
 
       <div className={heroGrid}>
