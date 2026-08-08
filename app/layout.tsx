@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { socialMetadata, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,10 +14,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/**
+ * Site-wide metadata. `metadataBase` is the only reason the social card's URL
+ * comes out absolute, which is the one thing every link-preview crawler
+ * requires; the card itself is drawn in `app/opengraph-image.tsx`.
+ */
 export const metadata: Metadata = {
-  title: "Address Insights",
-  description:
-    "What is daily life like from this front door? Walking, driving and density scores for any address.",
+  metadataBase: SITE_URL,
+  title: SITE_NAME,
+  description: SITE_TAGLINE,
+  ...socialMetadata({
+    title: SITE_NAME,
+    description: SITE_TAGLINE,
+    url: "/",
+  }),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
