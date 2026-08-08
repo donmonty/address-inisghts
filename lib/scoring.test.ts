@@ -6,6 +6,7 @@ import {
   type AddressInsight,
   type CategoryId,
   type MapboxFeature,
+  type RawByCategory,
 } from "@/lib/scoring";
 
 import heraldSquare from "@/lib/__fixtures__/herald-square.json";
@@ -25,10 +26,19 @@ type Fixture = {
 };
 
 const raw = (fixture: unknown) =>
-  (fixture as Fixture).byCategory as unknown as Record<
-    CategoryId,
-    MapboxFeature[]
-  >;
+  (fixture as Fixture).byCategory as unknown as RawByCategory;
+
+/** All twelve categories present as keys, all empty — the synthetic baseline. */
+const emptyByCategory = (): RawByCategory =>
+  Object.fromEntries(
+    CATEGORY_IDS.map((id) => [id, [] as MapboxFeature[]]),
+  ) as RawByCategory;
+
+const feature = (id: string, distance: number): MapboxFeature => ({
+  type: "Feature",
+  geometry: { type: "Point", coordinates: [0, 0] },
+  properties: { mapbox_id: id, name: id, distance },
+});
 
 const FIXTURES = {
   heraldSquare: raw(heraldSquare),
@@ -133,7 +143,15 @@ describe("the walking score's working", () => {
 describe("radius filtering", () => {
   it("discards features beyond the requested radius", () => {
     // Marfa's category responses reach absurd distances: a transit station at
-    // 168 km and a park at 237 km. Neither may count at 1 km or at 5 km.
+    // 168 km and a park at 237 km. Neither may count at 1 km or at 5 km — and
+    // the fixture must really contain them, or this proves nothing.
+    const furthestIn = (id: CategoryId) =>
+      Math.max(
+        ...FIXTURES.marfa[id].map((f) => f.properties.distance ?? -Infinity),
+      );
+    expect(furthestIn("public_transportation_station")).toBeGreaterThan(168_000);
+    expect(furthestIn("park")).toBeGreaterThan(237_000);
+
     const transit = categoryOf(insights.marfa, "public_transportation_station");
     expect(transit.present).toBe(false);
     expect(insights.marfa.drive).toBe(75); // 18/24, transit excluded
@@ -181,12 +199,9 @@ describe("empty and missing category responses", () => {
 
   it("treats a missing category key the same as an empty response", () => {
     const withoutSchool = { ...FIXTURES.plano };
-    delete (withoutSchool as Partial<Record<CategoryId, MapboxFeature[]>>)
-      .school;
+    delete (withoutSchool as Partial<RawByCategory>).school;
 
-    const insight = scoreAddress(
-      withoutSchool as Record<CategoryId, MapboxFeature[]>,
-    );
+    const insight = scoreAddress(withoutSchool as RawByCategory);
 
     expect(categoryOf(insight, "school").present).toBe(false);
     expect(insight.walk).toBeLessThan(insights.plano.walk);
@@ -210,10 +225,7 @@ describe("dedupe by mapbox_id", () => {
   });
 
   it("collapses a POI that arrives under two categories", () => {
-    const duplicate = structuredClone(FIXTURES.plano) as Record<
-      CategoryId,
-      MapboxFeature[]
-    >;
+    const duplicate = structuredClone(FIXTURES.plano) as RawByCategory;
     const nearestBank = duplicate.bank[0];
     duplicate.cafe = [nearestBank, ...duplicate.cafe];
 
@@ -247,17 +259,9 @@ describe("density bands", () => {
     [7, "Sparse"],
     [0, "Sparse"],
   ])("bands %i as %s", (index, band) => {
-    const feature = (id: string, distance: number): MapboxFeature => ({
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [0, 0] },
-      properties: { mapbox_id: id, name: id, distance },
-    });
-
     // π km² inside 1 km, so `count` POIs give an index of round(count / π).
     const count = Math.round(index * Math.PI);
-    const byCategory = Object.fromEntries(
-      CATEGORY_IDS.map((id) => [id, [] as MapboxFeature[]]),
-    ) as Record<CategoryId, MapboxFeature[]>;
+    const byCategory = emptyByCategory();
     byCategory.restaurant = Array.from({ length: count }, (_, i) =>
       feature(`poi-${i}`, 100),
     );
@@ -266,14 +270,10 @@ describe("density bands", () => {
   });
 
   it("caps the index at 100", () => {
-    const byCategory = Object.fromEntries(
-      CATEGORY_IDS.map((id) => [id, [] as MapboxFeature[]]),
-    ) as Record<CategoryId, MapboxFeature[]>;
-    byCategory.restaurant = Array.from({ length: 1000 }, (_, i) => ({
-      type: "Feature" as const,
-      geometry: { type: "Point" as const, coordinates: [0, 0] as [number, number] },
-      properties: { mapbox_id: `poi-${i}`, name: "x", distance: 100 },
-    }));
+    const byCategory = emptyByCategory();
+    byCategory.restaurant = Array.from({ length: 1000 }, (_, i) =>
+      feature(`poi-${i}`, 100),
+    );
 
     expect(scoreAddress(byCategory).densityIndex).toBe(100);
   });
@@ -302,11 +302,7 @@ describe("the verdict", () => {
   });
 
   it("owns an address with nothing within a walk", () => {
-    const byCategory = Object.fromEntries(
-      CATEGORY_IDS.map((id) => [id, [] as MapboxFeature[]]),
-    ) as Record<CategoryId, MapboxFeature[]>;
-
-    const insight = scoreAddress(byCategory);
+    const insight = scoreAddress(emptyByCategory());
 
     expect(insight).toMatchObject({
       walk: 0,

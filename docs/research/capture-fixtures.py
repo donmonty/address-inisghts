@@ -24,6 +24,9 @@ for line in open(os.path.join(ROOT, ".env.local")):
         TOKEN = line.strip().split("=", 1)[1]
 assert TOKEN, "MAPBOX_SERVER_TOKEN missing from .env.local"
 
+# Kept in step with CATEGORY_IDS/TIERS in lib/scoring.ts (and TIERS in
+# calibrate-scoring.py). Changing the category set means editing all three and
+# recapturing — see docs/research/mapbox-category-ids.md.
 CATS = [
     "grocery",
     "pharmacy",

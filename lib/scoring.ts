@@ -70,6 +70,9 @@ export interface MapboxFeature {
   };
 }
 
+/** The twelve raw category payloads, exactly as the endpoint returned them. */
+export type RawByCategory = Record<CategoryId, MapboxFeature[]>;
+
 export interface Amenity {
   /** The feature's `mapbox_id` — the dedupe key. */
   id: string;
@@ -110,26 +113,26 @@ export interface AddressInsight {
   amenities5km: Amenity[];
 }
 
-export function scoreAddress(
-  rawByCategory: Record<CategoryId, MapboxFeature[]>,
-): AddressInsight {
+export function scoreAddress(rawByCategory: RawByCategory): AddressInsight {
   const amenities5km = collect(rawByCategory, DRIVE_RADIUS_M);
   const amenities1km = amenities5km.filter(
     (a) => a.distanceMeters <= WALK_RADIUS_M,
   );
 
-  const nearestByCategory = nearestWithin(rawByCategory, WALK_RADIUS_M);
+  const nearestWalk = nearestWithin(rawByCategory, WALK_RADIUS_M);
+  const nearestDrive = nearestWithin(rawByCategory, DRIVE_RADIUS_M);
+
   const tiers: TierCoverage[] = TIERS.map(({ tier, weight, categories }) => ({
     tier,
     weight,
     categories: categories.map((id) => {
-      const nearestMeters = nearestByCategory.get(id) ?? null;
+      const nearestMeters = nearestWalk.get(id) ?? null;
       return { id, present: nearestMeters !== null, nearestMeters };
     }),
   }));
 
-  const walkCoverage = coverage(rawByCategory, WALK_RADIUS_M);
-  const driveCoverage = coverage(rawByCategory, DRIVE_RADIUS_M);
+  const walkCoverage = coverage(nearestWalk);
+  const driveCoverage = coverage(nearestDrive);
   const depth = Math.min(1, amenities1km.length / DEPTH_TARGET);
 
   const densityIndex = densityIndexOf(amenities1km.length);
@@ -144,7 +147,12 @@ export function scoreAddress(
     delta,
     densityIndex,
     densityBand: bandOf(densityIndex),
-    verdict: verdictFor({ tiers, densityIndex, delta, rawByCategory }),
+    verdict: verdictFor({
+      tiers,
+      densityIndex,
+      delta,
+      categoriesWithin5km: nearestDrive.size,
+    }),
     tiers,
     amenities1km,
     amenities5km,
@@ -160,10 +168,7 @@ export function scoreAddress(
  * `distance` are treated as outside every radius: an unplaceable POI can't be
  * bucketed honestly.
  */
-function collect(
-  rawByCategory: Record<CategoryId, MapboxFeature[]>,
-  radius: number,
-): Amenity[] {
+function collect(rawByCategory: RawByCategory, radius: number): Amenity[] {
   const byId = new Map<string, Amenity>();
 
   for (const category of CATEGORY_IDS) {
@@ -190,7 +195,7 @@ function collect(
 
 /** Nearest distance per category within `radius`; absent categories are omitted. */
 function nearestWithin(
-  rawByCategory: Record<CategoryId, MapboxFeature[]>,
+  rawByCategory: RawByCategory,
   radius: number,
 ): Map<CategoryId, number> {
   const nearest = new Map<CategoryId, number>();
@@ -208,13 +213,8 @@ function nearestWithin(
   return nearest;
 }
 
-/** Σ tier weight of every category with ≥1 POI within `radius`, over 24. */
-function coverage(
-  rawByCategory: Record<CategoryId, MapboxFeature[]>,
-  radius: number,
-): number {
-  const present = nearestWithin(rawByCategory, radius);
-
+/** Σ tier weight of every present category, over 24. */
+function coverage(present: Map<CategoryId, number>): number {
   const weighted = TIERS.reduce(
     (total, tier) =>
       total +
@@ -252,7 +252,7 @@ const BAND_PROSE: Record<DensityBand, string> = {
   Sparse: "sparse",
 };
 
-const ESSENTIAL_PROSE: Record<CategoryId, string> = {
+const CATEGORY_PROSE: Record<CategoryId, string> = {
   grocery: "a grocery",
   pharmacy: "a pharmacy",
   public_transportation_station: "public transport",
@@ -276,18 +276,20 @@ function verdictFor({
   tiers,
   densityIndex,
   delta,
-  rawByCategory,
+  categoriesWithin5km,
 }: {
   tiers: TierCoverage[];
   densityIndex: number;
   delta: number;
-  rawByCategory: Record<CategoryId, MapboxFeature[]>;
+  categoriesWithin5km: number;
 }): string {
   const categories = tiers.flatMap((tier) => tier.categories);
   const presentCount = categories.filter((c) => c.present).length;
-  const missingEssentials = tiers[0].categories
+  const missingEssentials = (
+    tiers.find((tier) => tier.tier === "essential")?.categories ?? []
+  )
     .filter((c) => !c.present)
-    .map((c) => ESSENTIAL_PROSE[c.id]);
+    .map((c) => CATEGORY_PROSE[c.id]);
 
   let walkLine: string;
   if (presentCount === CATEGORY_IDS.length) {
@@ -296,15 +298,14 @@ function verdictFor({
     walkLine = "No amenity category is within a 1 km walk.";
   } else {
     const tail = missingEssentials.length
-      ? `, but ${list(missingEssentials)} ${missingEssentials.length === 1 ? "is" : "are"} not`
+      ? `, but ${joinWithAnd(missingEssentials)} ${missingEssentials.length === 1 ? "is" : "are"} not`
       : ", including every essential";
     walkLine = `${presentCount} of twelve amenity categories are within a 1 km walk${tail}.`;
   }
 
   const densityLine = `The area is ${BAND_PROSE[bandOf(densityIndex)]}, at ${densityIndex} amenities per km².`;
 
-  const driveOnly =
-    nearestWithin(rawByCategory, DRIVE_RADIUS_M).size - presentCount;
+  const driveOnly = categoriesWithin5km - presentCount;
   const carLine =
     delta > 0
       ? `Driving 5 km adds ${driveOnly} more ${driveOnly === 1 ? "category" : "categories"} — worth +${delta} on the driving score.`
@@ -313,7 +314,7 @@ function verdictFor({
   return `${walkLine} ${densityLine} ${carLine}`;
 }
 
-function list(items: string[]): string {
+function joinWithAnd(items: string[]): string {
   if (items.length <= 1) return items.join("");
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
