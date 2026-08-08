@@ -1,16 +1,10 @@
 "use client";
 
-import { useState } from "react";
-
+import { useNearby } from "@/components/insights/nearby-provider";
 import { pillShape } from "@/components/insights/pill";
 import { Button } from "@/components/ui/button";
 import { CATEGORY_LABELS, formatDistance } from "@/lib/format";
-import {
-  selectNearby,
-  type NearbyFilter,
-  type NearbyRadius,
-} from "@/lib/nearby";
-import type { AddressInsight, Amenity } from "@/lib/scoring";
+import type { Amenity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,22 +15,21 @@ import { cn } from "@/lib/utils";
  * pharmacy, and how far". Every row is name, mono category, mono distance, in
  * two columns collapsing at `--breakpoint-wide`.
  *
- * The only client state is the radius and the filter. Both radii arrived in the
- * insight the server already scored, so the expander and the chips are pure
- * reads — no request, no loading state, and nothing here is coupled to the map
- * being alive. The two are independent: the expander is hidden in a filtered
- * view, where the cap it relieves doesn't apply, but the radius it set survives
- * the filter and is still in force when the reader returns to All.
+ * The only client state is the radius and the filter, and it lives one level up
+ * in `NearbyProvider` because the map band renders exactly this list and sits
+ * above the coverage cards. Both radii arrived in the insight the server
+ * already scored, so the expander and the chips are pure reads — no request, no
+ * loading state, and nothing here is coupled to the map being alive. The two
+ * controls are independent: the expander is hidden in a filtered view, where
+ * the cap it relieves doesn't apply, but the radius it set survives the filter
+ * and is still in force when the reader returns to All.
  *
  * Orange is spent on one thing in this section: the active chip, on its border
  * and text. Distances stay on the neutral ladder, unlike the coverage cards —
  * two dozen orange distances would out-shout the hero's walking numeral.
  */
-export function NearbyList({ insight }: { insight: AddressInsight }) {
-  const [radius, setRadius] = useState<NearbyRadius>("1km");
-  const [filter, setFilter] = useState<NearbyFilter>("all");
-
-  const view = selectNearby({ insight, radius, filter });
+export function NearbyList() {
+  const { view, setRadius, setFilter } = useNearby();
   const { expander } = view;
 
   return (

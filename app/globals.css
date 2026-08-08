@@ -138,3 +138,29 @@
   letter-spacing: -0.045em;
   line-height: 0.85;
 }
+
+/* The map's two pin shapes, in plain CSS rather than utilities: the markers are
+   built as DOM elements by GL JS, and reading `--card` / `--border` /
+   `--foreground` directly is what makes them follow the system's colour scheme
+   for free — the same way every other surface on the page does. */
+.address-pin svg path {
+  fill: var(--primary);
+}
+.address-pin svg circle {
+  fill: var(--card);
+}
+
+.amenity-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: var(--card);
+}
+.amenity-pin svg {
+  fill: var(--foreground);
+  opacity: 0.75;
+}
