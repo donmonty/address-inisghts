@@ -1,5 +1,9 @@
 import { CATEGORY_LABELS, TIER_LABELS, formatDistance } from "@/lib/format";
-import { CATEGORY_IDS, type TierCoverage } from "@/lib/scoring";
+import {
+  CATEGORY_IDS,
+  presentCategoryCount,
+  type TierCoverage,
+} from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,16 +17,15 @@ import { cn } from "@/lib/utils";
  * `--destructive`.
  */
 export function CoverageCards({ tiers }: { tiers: TierCoverage[] }) {
-  const categories = tiers.flatMap((tier) => tier.categories);
-  const presentCount = categories.filter((c) => c.present).length;
+  const presentCount = presentCategoryCount(tiers);
 
   return (
     <section className="mt-18">
       <header className="mb-5 flex items-baseline justify-between gap-4">
-        <h2 className="eyebrow text-[0.6875rem] text-muted-foreground">
+        <h2 className="eyebrow text-eyebrow text-muted-foreground">
           Category coverage
         </h2>
-        <span className="eyebrow text-[0.6875rem] text-muted-foreground">
+        <span className="eyebrow text-eyebrow text-muted-foreground">
           {presentCount} of {CATEGORY_IDS.length} present
         </span>
       </header>
@@ -40,10 +43,10 @@ function TierCard({ tier }: { tier: TierCoverage }) {
   return (
     <div className="rounded-lg border bg-card p-5">
       <div className="flex items-baseline justify-between gap-4">
-        <span className="eyebrow text-[0.6875rem] font-semibold">
+        <span className="eyebrow text-eyebrow font-semibold">
           {TIER_LABELS[tier.tier]}
         </span>
-        <span className="eyebrow text-[0.6875rem] text-muted-foreground">
+        <span className="eyebrow text-eyebrow text-muted-foreground">
           ×{tier.weight}
         </span>
       </div>

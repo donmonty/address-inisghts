@@ -22,7 +22,7 @@ export function ScoreHero({
 }) {
   return (
     <header className="pt-18 pb-10">
-      <p className="eyebrow text-[0.6875rem] text-muted-foreground">
+      <p className="eyebrow text-eyebrow text-muted-foreground">
         Walkability report
       </p>
       <h1 className="display-headline mt-3 max-w-[16ch] text-[clamp(2rem,4.5vw,3.25rem)] text-balance">
@@ -73,7 +73,7 @@ function Figure({
         lead ? "border-primary" : "border-foreground",
       )}
     >
-      <span className="eyebrow block text-[0.6875rem] text-muted-foreground">
+      <span className="eyebrow block text-eyebrow text-muted-foreground">
         {label}
       </span>
       <span

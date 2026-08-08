@@ -33,6 +33,10 @@ export const TIER_LABELS: Record<TierId, string> = {
  * Metres under a kilometre, kilometres to one decimal above it. Distances are
  * set in mono throughout, so they must not vary in precision within a column —
  * hence the round, which also absorbs a float if Mapbox ever sends one.
+ *
+ * The coverage cards only ever reach the metres branch, since a nearest
+ * distance is capped at the 1 km walking radius. The kilometres branch is for
+ * the amenity list's 5 km view.
  */
 export function formatDistance(meters: number): string {
   if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
