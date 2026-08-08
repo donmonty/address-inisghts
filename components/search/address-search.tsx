@@ -158,7 +158,10 @@ export function AddressSearch() {
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
     >
+      {/* Positioned, so the icon centres on the input rather than on the
+          wrapper — which is taller by the status line underneath. */}
       <form
+        className="relative"
         role="search"
         onSubmit={(event) => {
           event.preventDefault();
@@ -176,7 +179,12 @@ export function AddressSearch() {
         />
         <input
           id={`${listId}-input`}
-          type="search"
+          // Deliberately not `type="search"`: Chrome clears one natively on
+          // Escape, which would wipe a typed address where the combobox
+          // convention is to close the list and leave the query alone — and
+          // would end the interaction, spending a second session token on the
+          // very next keystroke.
+          type="text"
           role="combobox"
           autoComplete="off"
           spellCheck={false}
@@ -191,7 +199,7 @@ export function AddressSearch() {
           onChange={(event) => onType(event.target.value)}
           onKeyDown={onKeyDown}
           onFocus={() => setOpen(true)}
-          className="h-15 w-full rounded-lg border bg-card pr-5 pl-13 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-70 sm:text-lg [&::-webkit-search-cancel-button]:hidden"
+          className="h-15 w-full rounded-lg border bg-card pr-5 pl-13 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-70 sm:text-lg"
         />
       </form>
 
