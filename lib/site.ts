@@ -12,7 +12,7 @@ import type { Metadata } from "next";
 export const SITE_URL = new URL(
   process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
-    : "https://address-insights-monty.vercel.app",
+    : "https://getdencity.com",
 );
 
 export const SITE_NAME = "Dencity";
