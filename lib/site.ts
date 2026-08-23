@@ -15,13 +15,13 @@ export const SITE_URL = new URL(
     : "https://address-insights-monty.vercel.app",
 );
 
-export const SITE_NAME = "Address Insights";
+export const SITE_NAME = "Dencity";
 
 export const SITE_TAGLINE =
   "What is daily life like from this front door? Walking, driving and density scores for any address.";
 
 export const OG_IMAGE_ALT =
-  "Address Insights — walking, driving and amenity density scores for any address";
+  "Dencity — walking, driving and amenity density scores for any address";
 
 /** The one social card, as a metadata descriptor. */
 const OG_IMAGE = {

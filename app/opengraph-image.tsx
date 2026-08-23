@@ -17,8 +17,13 @@ import { OG_IMAGE_ALT } from "@/lib/site";
  * The card is the dark theme's tokens verbatim (`app/globals.css`): `#16181C`
  * ground, `#F1F5F8` headline, `#8B949E` support, and orange `#F4511E` used only
  * as the walking rule — never as a surface. Fonts are the committed Geist TTFs
- * rather than a build-time download, because Satori needs TTF/OTF and
+ * rather than a build-time download, because Satori needs TTF/OTF/WOFF and
  * `next/font/google` only ever produces woff2.
+ *
+ * The one exception is the wordmark itself: the Dencity lockup's exact
+ * approved colors (`#EEF2F3` / `#FF5C1A`), not the surrounding dark-theme
+ * tokens, in the same Space Grotesk Bold TTF the in-app `Logo` component
+ * renders with the browser's own font loading — see `components/brand/logo.tsx`.
  *
  * No scores appear on it. Three labelled rules echo the hero's shape without
  * fabricating numbers for an address the card isn't about.
@@ -32,17 +37,23 @@ export const contentType = "image/png";
 
 const FONT_DIR = join(process.cwd(), "assets", "fonts");
 
-const [geistBold, geistRegular, geistMonoMedium] = await Promise.all([
-  readFile(join(FONT_DIR, "Geist-Bold.ttf")),
-  readFile(join(FONT_DIR, "Geist-Regular.ttf")),
-  readFile(join(FONT_DIR, "GeistMono-Medium.ttf")),
-]);
+const [geistBold, geistRegular, geistMonoMedium, spaceGroteskBold] =
+  await Promise.all([
+    readFile(join(FONT_DIR, "Geist-Bold.ttf")),
+    readFile(join(FONT_DIR, "Geist-Regular.ttf")),
+    readFile(join(FONT_DIR, "GeistMono-Medium.ttf")),
+    readFile(join(FONT_DIR, "SpaceGrotesk-Bold.ttf")),
+  ]);
 
 const BACKGROUND = "#16181C";
 const FOREGROUND = "#F1F5F8";
 const MUTED_FOREGROUND = "#8B949E";
 const BORDER = "#2A2F36";
 const PRIMARY = "#F4511E";
+
+/** The Dencity lockup's own exact colors — see `components/brand/logo.tsx`. */
+const WORDMARK = "#EEF2F3";
+const WORDMARK_PERIOD = "#FF5C1A";
 
 /**
  * The hero's three rule-topped columns. Walking takes the orange rule and only
@@ -74,14 +85,16 @@ export default function OpenGraphImage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <div
             style={{
-              fontFamily: "Geist Mono",
-              fontSize: 24,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: MUTED_FOREGROUND,
+              display: "flex",
+              fontFamily: "Space Grotesk",
+              fontWeight: 700,
+              fontSize: 44,
+              lineHeight: 0.92,
+              letterSpacing: "-0.04em",
             }}
           >
-            Address Insights
+            <span style={{ color: WORDMARK }}>Dencity</span>
+            <span style={{ color: WORDMARK_PERIOD }}>.</span>
           </div>
           <div
             style={{
@@ -131,6 +144,12 @@ export default function OpenGraphImage() {
           name: "Geist Mono",
           data: geistMonoMedium,
           weight: 500,
+          style: "normal",
+        },
+        {
+          name: "Space Grotesk",
+          data: spaceGroteskBold,
+          weight: 700,
           style: "normal",
         },
       ],

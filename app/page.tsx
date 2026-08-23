@@ -1,3 +1,4 @@
+import { Logo } from "@/components/brand/logo";
 import { AddressSearch } from "@/components/search/address-search";
 import { ExampleAddresses } from "@/components/search/example-addresses";
 import { RecentLookups } from "@/components/search/recent-lookups";
@@ -14,9 +15,7 @@ export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-12 px-6 py-24">
       <div className="flex flex-col gap-4">
-        <p className="eyebrow text-eyebrow text-muted-foreground">
-          Address Insights
-        </p>
+        <Logo />
         <h1 className="headline text-4xl text-balance sm:text-5xl">
           What is daily life like from this front door?
         </h1>
