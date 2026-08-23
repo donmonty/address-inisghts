@@ -88,6 +88,12 @@ export async function generateMetadata({
   return {
     title,
     description,
+    // One page per coordinate pair is an unbounded space, and no two of them
+    // differ enough to be worth a search result. Keeping them out of the index
+    // spends the crawl on the homepage, which is the page anyone would search
+    // for. A shared link still previews: `robots` governs indexing, not the
+    // Open Graph card below.
+    robots: { index: false, follow: true },
     ...socialMetadata({ title, description, url: `/insights/${coords}` }),
   };
 }
