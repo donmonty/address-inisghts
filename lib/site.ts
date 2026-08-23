@@ -18,7 +18,7 @@ export const SITE_URL = new URL(
 export const SITE_NAME = "Dencity";
 
 export const SITE_TAGLINE =
-  "What is daily life like from this front door? Walking, driving and density scores for any address.";
+  "So, what's the neighborhood like? Get walking, driving and density scores for any address.";
 
 export const OG_IMAGE_ALT =
   "Dencity — walking, driving and amenity density scores for any address";

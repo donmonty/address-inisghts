@@ -17,11 +17,10 @@ export default function Home() {
       <div className="flex flex-col gap-4">
         <Logo />
         <h1 className="headline text-4xl text-balance sm:text-5xl">
-          What is daily life like from this front door?
+          So, what&apos;s the neighborhood like?
         </h1>
         <p className="text-lg text-muted-foreground">
-          Type an address and get walking, driving and density scores for that
-          exact point — with the working shown.
+          Get walking, driving and density scores for any address.
         </p>
       </div>
 

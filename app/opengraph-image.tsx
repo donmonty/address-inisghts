@@ -105,11 +105,10 @@ export default function OpenGraphImage() {
               maxWidth: 900,
             }}
           >
-            What is daily life like from this front door?
+            So, what&apos;s the neighborhood like?
           </div>
           <div style={{ fontSize: 30, color: MUTED_FOREGROUND, maxWidth: 860 }}>
-            Walking, driving and density scores for any address — with the
-            working shown.
+            Get walking, driving and density scores for any address.
           </div>
         </div>
 
