@@ -32,7 +32,13 @@ const OG_IMAGE = {
 } as const;
 
 /**
- * The Open Graph and Twitter blocks for one route.
+ * The Open Graph, Twitter, and canonical blocks for one route.
+ *
+ * The canonical tag is here rather than at each call site because `url` is
+ * already the route's one true path, and the alias host
+ * `address-insights-monty.vercel.app` serves the same pages as the apex. Naming
+ * the canonical means every host points search engines back at
+ * `getdencity.com` instead of competing with it.
  *
  * Both routes need the same shape and the same image, and a route that declares
  * its own `openGraph` replaces its parent's **wholesale** — the image the
@@ -52,8 +58,9 @@ export function socialMetadata({
   description: string;
   /** Relative to `SITE_URL`; Next resolves it against `metadataBase`. */
   url: string;
-}): Pick<Metadata, "openGraph" | "twitter"> {
+}): Pick<Metadata, "openGraph" | "twitter" | "alternates"> {
   return {
+    alternates: { canonical: url },
     openGraph: {
       type: "website",
       siteName: SITE_NAME,
