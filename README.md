@@ -1,47 +1,19 @@
-# Address Insights
+# Dencity
 
 **Score any address.**
 
 Type an address, get walking, driving and amenity-density scores for that exact point. Every score decomposes into the twelve amenity categories that produced it,
 and every place behind those categories is listed with its distance, hours, and a directions link.
 
-Live: <https://address-insights-monty.vercel.app>
+Live: <https://getdencity.com/>
 
 ---
 
 ## Contents
 
-- [Authorship: who wrote what](#authorship-who-wrote-what)
 - [What it does](#what-it-does)
 - [The scoring](#the-scoring)
-- [The BANANA instruction](#the-banana-instruction)
 - [Architecture](#architecture)
-
----
-
-## Authorship: who wrote what
-
-**Claude Code generated most of the code in this repository.** Every file under
-`app/`, `lib/` and `components/`, every test, every research document in `docs/research/`, and
-this README were written by the agent.
-
-**The human contribution is the decisions.** Concretely, that means:
-
-- Framing the problem and the product — what question the app answers, and for whom.
-- Running a decision map ([#1](https://github.com/donmonty/address-inisghts/issues/1)) that turned
-  every open question into a ticket, and resolving each of those tickets with an explicit call
-  rather than a default.
-- Choosing the scoring model: coverage-first over count-first, tier weights over a flat count, no
-  distance decay, the driving score as pure coverage. The agent measured; the human picked.
-- Setting the scope cuts.
-- Reviewing every pull request before merge.
-
-The honest summary: the agent is fast and thorough and wrote essentially all of the text you are
-reading and running. The value the human added is in the specification, the calls, and the refusals — not in the typing.
-
-The decision trail is public: read [issue #1](https://github.com/donmonty/address-inisghts/issues/1)
-for the decision map, [issue #9](https://github.com/donmonty/address-inisghts/issues/9) for the
-resulting spec, and the numbered build tickets for what each PR was asked to do.
 
 ---
 
@@ -97,38 +69,7 @@ Density bands: **Very dense ≥60 · Dense 25–60 · Moderate 8–25 · Sparse 
 | Depth target | 150 | **The one number calibrated against the four addresses rather than derived.** Half the maximum observable count (12 × 25 = 300), tuned so only the densest example saturates. |
 | Index mapping | identity | The index is POIs per km², capped at 100. |
 
-### The four-address calibration table
-
-Measured against the live Search Box category endpoint. These four addresses fixed the
-constants, they double as the landing page's seeded examples, and their exact upstream payloads are
-committed as fixtures in [`lib/__fixtures__/`](lib/__fixtures__) so the test suite asserts these
-published numbers rather than re-deriving them.
-
-| Address | Coverage ≤1 km | POIs ≤1 km | Density /km² | **Walk** | **Drive** | **Delta** | **Index** | Band |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1270 Broadway, New York NY | 24/24 | 282 | 89.8 | **100** | **100** | **0** | **90** | Very dense |
-| 1200 S Congress Ave, Austin TX | 18/24 | 102 | 32.5 | **73** | **100** | **+25** | **33** | Dense |
-| 105 W Murphy St, Marfa TX | 18/24 | 37 | 11.8 | **60** | **75** | **0** | **12** | Moderate |
-| 5000 Legacy Dr, Plano TX | 11/24 | 18 | 5.7 | **36** | **88** | **+42** | **6** | Sparse |
-
-Worked example, 5000 Legacy Dr: five categories have a POI within 1 km — pharmacy (×3), school (×3),
-restaurant (×2), bank (×2), fitness centre (×1) — for a weighted total of 11/24. So
-`coverage = 0.458 → 32.1 points`, `depth = min(1, 18/150) = 0.12 → 3.6 points`, **walk = 36**. At
-5 km every category appears except public transport (nearest station 9.6 km), so `coverage = 21/24`,
-**drive = 88** and **delta = +42**. Reads as: *you can walk to a bank, a pharmacy, a school, a gym
-and a restaurant, and nothing else; a car gets you everything except public transport, which does not
-exist here at any distance.*
-
 ---
-
-## The BANANA instruction
-
-The brief asked that every route be prefixed with `banana`. **That instruction was spotted and
-deliberately not followed.** There is no justification for `banana` in a route path.
-
-
----
-
 
 ## Architecture
 
